@@ -1,0 +1,16 @@
+# Datasets — too large for git, stored on Google Drive
+datasets/
+datasets/statefarm
+Smoker-YOLO-2/
+Smoking-and-Drinking-Detection-2/
+*.zip
+*.pt
+*.tflite
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Training results
+driver_distraction/
+runs/

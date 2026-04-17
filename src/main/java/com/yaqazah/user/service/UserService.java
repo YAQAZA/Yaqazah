@@ -12,7 +12,7 @@ public class UserService {
     @Autowired
     private UserRepository userRepo;
 
-    // General user retrieval [cite: 278, 336]
+    // General user retrieval
     public User getUser(UUID id) {
         return userRepo.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
     }

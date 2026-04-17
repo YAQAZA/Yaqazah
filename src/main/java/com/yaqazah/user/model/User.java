@@ -41,9 +41,4 @@ public class User {
     // Used only by DRIVER.
     // Using object 'Boolean' instead of primitive 'boolean' so it can be null for non-drivers.
     private Boolean isFleetDriver;
-
-    // You can keep your relationships here too, just make sure your logic
-    // only populates this if the Role == DRIVER
-    // @OneToMany(mappedBy = "driver")
-    // private List<Session> sessions;
 }

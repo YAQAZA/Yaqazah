@@ -29,5 +29,4 @@ public class DetectionLog {
     private String snapshotProofUrl;
     private float valueDetected;
 
-    // Getters and Setters
 }

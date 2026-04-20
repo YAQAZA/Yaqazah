@@ -19,7 +19,7 @@ public class Session {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID sessionId;
 
-    private UUID userId; // FK to User
+    private UUID userId;
     private String startTime;
     private String endTime;
     private float durationHours;
@@ -28,5 +28,4 @@ public class Session {
     @Enumerated(EnumType.STRING)
     private SessionStatus status;
 
-    // Getters and Setters omitted for brevity
 }

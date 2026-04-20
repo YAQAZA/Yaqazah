@@ -10,8 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin/users")
-// --- THE CHANGE IS HERE ---
-@PreAuthorize("hasAnyRole('COMPANYADM', 'COMPANYADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'COMPANYADMIN')")
 public class AdminUserController {
 
     @Autowired

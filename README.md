@@ -71,3 +71,187 @@ The system uses a dual-layer AI pipeline:
 | Caching         | Redis           |
 | AI/ML           | TensorFlow Lite |
 | Computer Vision | MediaPipe       |
+
+---
+
+## ⚙️ Backend Setup (Spring Boot)
+
+### 1. Clone the Repository
+
+```bash
+git clone git@github.com:YAQAZA/Yaqazah.git
+cd Yaqazah
+```
+
+---
+
+### 2. Prerequisites
+
+Make sure you have installed:
+
+* Java 21
+* Maven
+* PostgreSQL
+
+[//]: # (* Redis)
+
+---
+
+### 3. Create PostgreSQL Database
+
+Open PostgreSQL and run:
+
+```sql
+CREATE DATABASE yaqazah_db;
+```
+
+[//]: # (---)
+
+[//]: # ()
+[//]: # (### 4. Configure Environment)
+
+[//]: # ()
+[//]: # (Update `src/main/resources/application.properties`:)
+
+[//]: # ()
+[//]: # (```properties)
+
+[//]: # (spring.datasource.url=jdbc:postgresql://localhost:5432/yaqazah_db)
+
+[//]: # (spring.datasource.username=YOUR_USERNAME)
+
+[//]: # (spring.datasource.password=YOUR_PASSWORD)
+
+[//]: # ()
+[//]: # (spring.jpa.hibernate.ddl-auto=update)
+
+[//]: # (spring.jpa.show-sql=true)
+
+[//]: # ()
+[//]: # (spring.redis.host=localhost)
+
+[//]: # (spring.redis.port=6379)
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (---)
+
+[//]: # ()
+[//]: # (### 5. Run Redis)
+
+[//]: # ()
+[//]: # (Make sure Redis server is running:)
+
+[//]: # ()
+[//]: # (```bash)
+
+[//]: # (redis-server)
+
+[//]: # (```)
+
+---
+
+### 4. Build & Run the Application
+
+```bash
+mvn clean install
+mvn spring-boot:run
+```
+
+---
+
+### 5. API Documentation
+
+After running, access Swagger UI:
+
+```
+http://localhost:8080/swagger-ui.html
+```
+
+---
+
+## 🔐 Authentication & Security
+
+* Spring Security with OAuth2 client support
+* JWT-based authentication using `jjwt`
+* Role-based access control for users and admins
+
+---
+
+## 📊 Data & Reporting
+
+* Export reports using:
+
+    * CSV (Apache Commons CSV)
+* Stores session history and fatigue analytics per driver
+
+---
+
+[//]: # (## 🧪 Testing)
+
+[//]: # ()
+[//]: # (Run tests using:)
+
+[//]: # ()
+[//]: # (```bash)
+
+[//]: # (mvn test)
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (Includes:)
+
+[//]: # ()
+[//]: # (* JPA tests)
+
+[//]: # (* Security tests)
+
+[//]: # (* Redis tests)
+
+[//]: # (* Web layer tests)
+
+[//]: # ()
+[//]: # (---)
+
+[//]: # (## 🚀 Notes)
+
+[//]: # ()
+[//]: # (* Ensure PostgreSQL and Redis are running before starting the backend)
+
+[//]: # (* Default server port: `8080`)
+
+[//]: # (* Change port if needed:)
+
+[//]: # ()
+[//]: # (```properties)
+
+[//]: # (server.port=8081)
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (---)
+
+[//]: # ()
+[//]: # (## 📌 Future Improvements)
+
+[//]: # ()
+[//]: # (* Real-time alerts via WebSockets)
+
+[//]: # (* Advanced ML models for higher accuracy)
+
+[//]: # (* Cloud deployment &#40;AWS / Kubernetes&#41;)
+
+[//]: # (* Integration with vehicle systems &#40;IoT&#41;)
+
+[//]: # ()
+[//]: # (---)
+
+## 👥 Contributors
+
+* Yaqazah Team
+
+---
+

@@ -52,9 +52,9 @@ public class AuthController {
 
         // --- SECURITY OVERRIDES ---
 
-        // 1. Force the role to INDEPENDENTDRIVER
-        // (Ensures public signups can never be COMPANYADMIN, ADMIN, or FLEET_DRIVER)
-        user.setRole(Role.INDEPENDENTDRIVER);
+        // 1. Force the role to INDEPENDENT_DRIVER
+        // (Ensures public signups can never be COMPANY_ADMIN, ADMIN, or FLEET_DRIVER)
+        user.setRole(Role.INDEPENDENT_DRIVER);
 
         // 2. Strip away any company affiliation
         // (Independent drivers shouldn't belong to a fleet)

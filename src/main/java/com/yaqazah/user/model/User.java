@@ -37,8 +37,4 @@ public class User {
 
     // Used by both COMPANYADMIN and DRIVER. Will be null for standard ADMIN.
     private UUID companyId;
-
-    // Used only by DRIVER.
-    // Using object 'Boolean' instead of primitive 'boolean' so it can be null for non-drivers.
-    private Boolean isFleetDriver;
 }

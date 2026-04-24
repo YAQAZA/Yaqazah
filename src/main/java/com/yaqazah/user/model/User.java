@@ -35,6 +35,6 @@ public class User {
 
     // --- Role-Specific Attributes ---
 
-    // Used by both COMPANYADMIN and DRIVER. Will be null for standard ADMIN.
+    // Used by both COMPANY_ADMIN and DRIVER. Will be null for standard ADMIN.
     private UUID companyId;
 }

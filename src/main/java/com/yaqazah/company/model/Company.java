@@ -1,4 +1,4 @@
-package com.yaqazah.user.model;
+package com.yaqazah.company.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

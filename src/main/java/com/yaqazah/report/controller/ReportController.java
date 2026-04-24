@@ -2,6 +2,7 @@ package com.yaqazah.report.controller;
 
 import com.yaqazah.report.service.ReportService;
 import com.yaqazah.user.model.User;
+import com.yaqazah.user.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -26,6 +27,8 @@ public class ReportController {
 
     @Autowired
     private ReportService reportService;
+    @Autowired
+    private UserRepository userRepository;
 
     @Operation(
             summary = "Generate CSV Report",
@@ -46,8 +49,16 @@ public class ReportController {
     ) throws IOException {
 
         // 2. Cast the principal to whatever class your JWT filter uses to store user data
-        User user = (User) authentication.getPrincipal();
+// 1. Cast to the Spring Security interface, NOT your custom User class
+        org.springframework.security.core.userdetails.UserDetails springSecurityUser =
+                (org.springframework.security.core.userdetails.UserDetails) authentication.getPrincipal();
 
+// 2. Extract the identifier (usually the email or username)
+        String userEmail = springSecurityUser.getUsername();
+
+// 3. Look up your actual database entity using your repository
+        com.yaqazah.user.model.User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found in database"));
         // 3. Securely extract the company ID from the token payload
         UUID secureCompanyId = user.getCompanyId();
 

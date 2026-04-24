@@ -1,7 +1,9 @@
 package com.yaqazah.user.controller;
 
 import com.yaqazah.common.security.JwtUtil;
+import com.yaqazah.user.model.Role;
 import com.yaqazah.user.model.User;
+import com.yaqazah.user.model.UserStatus;
 import com.yaqazah.user.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -43,16 +45,34 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Email is already taken!")
     })
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@RequestBody User user) {
+    public ResponseEntity<?> signup(@RequestBody User user) {
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body("Email is already taken!");
         }
 
+        // --- SECURITY OVERRIDES ---
+
+        // 1. Force the role to INDEPENDENTDRIVER
+        // (Ensures public signups can never be COMPANYADMIN, ADMIN, or FLEET_DRIVER)
+        user.setRole(Role.INDEPENDENTDRIVER);
+
+        // 2. Strip away any company affiliation
+        // (Independent drivers shouldn't belong to a fleet)
+        user.setCompanyId(null);
+
+        // 3. Ensure they are active by default if they didn't send a status
+        if (user.getStatus() == null) {
+            user.setStatus(UserStatus.ACTIVE);
+        }
+
+        // --------------------------
+
         // Hash the password before saving to the database
         user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
 
-        userRepository.save(user); // Save to DB
-        return ResponseEntity.ok("User registered successfully!");
+        // Return the saved user so the frontend gets the generated UUID
+        User savedUser = userRepository.save(user);
+        return ResponseEntity.ok(savedUser);
     }
 
     // 2. LOG IN

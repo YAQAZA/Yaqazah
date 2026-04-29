@@ -18,4 +18,6 @@ public interface CompanyRepository extends JpaRepository<Company, UUID> {
 
     // Example: If you wanted to find a company by its name
     Optional<Company> findByNameIgnoreCase(String name);
+
+    boolean existsById(Long companyId);
 }

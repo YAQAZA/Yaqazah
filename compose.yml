@@ -1,0 +1,25 @@
+services:
+#  postgres:
+#    image: postgres:15-alpine # Alpine is a smaller, faster version of Linux
+#    container_name: yaqazah-postgres
+#    ports:
+#      - "5432:5432"
+#    environment:
+#      POSTGRES_DB: yaqazah_db
+#      POSTGRES_USER: postgres
+#      POSTGRES_PASSWORD: "0000"
+#    volumes:
+#      - postgres-data:/var/lib/postgresql/data # Saves your data so it isn't lost on restart
+
+  redis:
+    image: redis:7-alpine
+    container_name: yaqazah-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+# Define the volumes for data persistence
+volumes:
+  postgres-data:
+  redis-data:

@@ -7,5 +7,4 @@ public class DriverStatisticsDTO {
     private String sleepinessTrends;
     private String recommendedBreaks;
 
-    // Generate Getters and Setters here
 }

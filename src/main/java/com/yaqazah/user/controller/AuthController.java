@@ -3,11 +3,9 @@ package com.yaqazah.user.controller;
 import com.yaqazah.common.security.JwtUtil;
 import com.yaqazah.user.model.Role;
 import com.yaqazah.user.model.User;
-import com.yaqazah.user.model.UserStatus;
 import com.yaqazah.user.repository.UserRepository;
+import com.yaqazah.user.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,79 +16,100 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
-@Tag(name = "Authentication", description = "Endpoints for user registration and login")
+@Tag(name = "Authentication")
 public class AuthController {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private UserDetailsService userDetailsService;
-
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    @Autowired private AuthenticationManager authenticationManager;
+    @Autowired private UserDetailsService userDetailsService;
+    @Autowired private JwtUtil jwtUtil;
+    @Autowired private UserRepository userRepository;
+    @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired private AuthService authService;
 
     // 1. SIGN UP
-    @Operation(summary = "Register a new user", description = "Creates a new user in the database. Will fail if the email is already in use.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User registered successfully!"),
-            @ApiResponse(responseCode = "400", description = "Email is already taken!")
-    })
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody User user) {
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body("Email is already taken!");
         }
 
-        // --- SECURITY OVERRIDES ---
-
-        // 1. Force the role to INDEPENDENT_DRIVER
-        // (Ensures public signups can never be COMPANY_ADMIN, ADMIN, or FLEET_DRIVER)
+        // Security Overrides
         user.setRole(Role.INDEPENDENT_DRIVER);
-
-        // 2. Strip away any company affiliation
-        // (Independent drivers shouldn't belong to a fleet)
-        user.setCompanyId(null);
-
-        // 3. Ensure they are active by default if they didn't send a status
-        if (user.getStatus() == null) {
-            user.setStatus(UserStatus.ACTIVE);
-        }
-
-        // --------------------------
-
-        // Hash the password before saving to the database
+        user.setCompany(null);
         user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
 
-        // Return the saved user so the frontend gets the generated UUID
-        User savedUser = userRepository.save(user);
-        return ResponseEntity.ok(savedUser);
+        userRepository.save(user);
+
+        // Send the 6-digit OTP immediately
+        authService.sendVerificationEmail(user.getEmail());
+
+        return ResponseEntity.ok("User registered! Check your email for the verification code.");
     }
 
-    // 2. LOG IN
-    @Operation(summary = "Log in to get JWT Token", description = "Send email and password as form parameters to receive a Bearer token for accessing protected routes.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully returned the JWT Token"),
-            @ApiResponse(responseCode = "403", description = "Bad credentials (wrong email or password)")
-    })
+    // 2. VERIFY EMAIL
+    @PostMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@RequestBody Map<String, String> payload) {
+        try {
+            String email = payload.get("email");
+            String otp = payload.get("otp");
+
+            // Logic inside AuthService checks if OTP is valid for this email
+            authService.verifyEmail(email, otp);
+
+            // Generate the JWT immediately upon successful verification
+            final UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            final String jwt = jwtUtil.generateToken(userDetails);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Email verified successfully!",
+                    "token", jwt
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 3. LOG IN
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestParam String email, @RequestParam String password) {
-        // Authenticate the user (Spring checks the hashed password automatically)
+        // Standard authentication
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
 
-        // If successful, generate the JWT
         final UserDetails userDetails = userDetailsService.loadUserByUsername(email);
         final String jwt = jwtUtil.generateToken(userDetails);
 
-        // Return the token to the Flutter app/Web frontend
         return ResponseEntity.ok(jwt);
+    }
+
+    // 4. FORGOT PASSWORD (Trigger OTP)
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestParam String email) {
+        try {
+            authService.sendPasswordResetOtp(email);
+            return ResponseEntity.ok("Reset code sent to your email.");
+        } catch (IllegalArgumentException e) {
+            // For security, you could return 200 even if email is not found,
+            // but 400 is common for debugging.
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 5. RESET PASSWORD (Submit OTP + New Password)
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> payload) {
+        try {
+            String email = payload.get("email");
+            String otp = payload.get("otp");
+            String newPassword = payload.get("newPassword");
+
+            authService.resetPassword(email, otp, newPassword);
+            return ResponseEntity.ok("Password has been reset successfully!");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

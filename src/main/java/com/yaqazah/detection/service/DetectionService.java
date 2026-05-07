@@ -1,28 +1,34 @@
 package com.yaqazah.detection.service;
 
 import com.yaqazah.detection.model.DetectionLog;
-import com.yaqazah.detection.model.DetectionType;
+import com.yaqazah.detection.dto.DetectionRequest; // Added import
 import com.yaqazah.detection.repository.DetectionLogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
+import java.util.Base64;
 
 @Service
 public class DetectionService {
+
     @Autowired
     private DetectionLogRepository detectionLogRepo;
 
-    private UUID sessionId;
+    public void processDetection(DetectionRequest dto) {
+        DetectionLog log = new DetectionLog();
+        log.setSessionId(dto.getSessionId());
+        log.setTimestamp(dto.getTimestamp());
+        log.setType(dto.getType());
+        log.setValueDetected(dto.getValueDetected());
 
-    public void startDetection(UUID sessionId) {
-        this.sessionId = sessionId; /* Logic */
-    }
+        // Logic for severity
+        log.setSeverity(dto.getValueDetected() > 0.7 ? "HIGH" : "NORMAL");
 
-    public void endDetection() { /* Logic */ }
+        // Convert the string to the efficient byte array
+        if (dto.getPhotoBase64() != null) {
+            byte[] imageBytes = Base64.getDecoder().decode(dto.getPhotoBase64());
+            log.setSnapshotImage(imageBytes); // This now matches the model!
+        }
 
-    public DetectionLog log(String time, DetectionType type, Object frame) {
-        // Build and save log
-        return new DetectionLog();
+        detectionLogRepo.save(log);
     }
 }

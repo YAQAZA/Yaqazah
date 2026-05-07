@@ -60,7 +60,7 @@ public class ReportController {
         com.yaqazah.user.model.User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found in database"));
         // 3. Securely extract the company ID from the token payload
-        UUID secureCompanyId = user.getCompanyId();
+        UUID secureCompanyId = user.getCompany().getCompanyId();
 
         response.setContentType("text/csv");
         response.setHeader("Content-Disposition", "attachment; filename=\"driver_sessions_report.csv\"");

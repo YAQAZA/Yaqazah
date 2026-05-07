@@ -1,5 +1,7 @@
 package com.yaqazah.user.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yaqazah.company.model.Company;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,10 +20,10 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID userId;
-
+    @Column(unique = true, nullable = false)
     private String email;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String passwordHash;
-//    private String username;
     private String fullName;
 
     @Enumerated(EnumType.STRING)
@@ -35,6 +37,7 @@ public class User {
 
     // --- Role-Specific Attributes ---
 
-    // Used by both COMPANY_ADMIN and DRIVER. Will be null for standard ADMIN.
-    private UUID companyId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "companyId")
+    private Company company;
 }

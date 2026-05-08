@@ -1,5 +1,7 @@
 package com.yaqazah.detection.model;
 
+import com.yaqazah.user.model.User;
+import com.yaqazah.session.model.Session;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.UUID;
@@ -12,7 +14,14 @@ public class DetectionLog {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID eventId;
 
-    private UUID sessionId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "session_id", nullable = false)
+    private Session session;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
     private String timestamp;
 
     @Enumerated(EnumType.STRING)
@@ -21,7 +30,6 @@ public class DetectionLog {
     private String severity;
     private float valueDetected;
 
-    @Lob
-    @Column(name = "snapshot_image")
-    private byte[] snapshotImage;
+    @Column(columnDefinition = "TEXT")
+    private String snapshotUrl;
 }

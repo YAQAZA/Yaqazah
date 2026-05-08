@@ -1,4 +1,4 @@
-package com.yaqazah.email.service;
+package com.yaqazah.infrastructure.email.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;

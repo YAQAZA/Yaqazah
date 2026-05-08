@@ -1,4 +1,4 @@
-package com.yaqazah.common.test;
+package com.yaqazah.infrastructure.storage.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

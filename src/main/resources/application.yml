@@ -28,18 +28,17 @@ spring:
           starttls:
             enable: true
 
-  minio:
-    endpoint: http://localhost:9000
-    access-key: admin
-    secret-key: password123
-    bucket-name: user-images
-
   data:
     redis:
       host: localhost
       port: 6379
-#      username:
-      # password:
 
   cache:
     type: redis
+
+# MINIO GOES HERE, AT THE ROOT LEVEL (NO INDENTATION)
+#minio:
+#  endpoint: localhost:9000
+#  access-key:
+#  secret-key:
+#  bucket-name: snapshots

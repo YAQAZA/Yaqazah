@@ -26,7 +26,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             "d.eventId, d.timestamp, cast(d.type as string), d.severity, d.valueDetected) " +
             "FROM User u " +
             "LEFT JOIN Session s ON u.userId = s.userId " + //or JOIN
-            "LEFT JOIN DetectionLog d ON s.sessionId = d.sessionId " +
+            "LEFT JOIN DetectionLog d ON s.sessionId = d.session.sessionId " +
             "WHERE u.company.companyId = :companyId AND u.role = 'DRIVER'")
     List<DriverSessionReportDto> findCombinedDriverDataByCompany(@Param("companyId") UUID companyId);
 

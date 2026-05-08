@@ -1,4 +1,4 @@
-package com.yaqazah.common.test;
+package com.yaqazah.infrastructure.storage.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +15,7 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.Base64;
 
 @Service
 public class FileService {
@@ -22,7 +23,6 @@ public class FileService {
     @Autowired
     private S3Client s3Client;
 
-    // We need these values to build the Presigner
     @Value("${minio.endpoint}")
     private String endpoint;
 
@@ -32,24 +32,32 @@ public class FileService {
     @Value("${minio.secret-key}")
     private String secretKey;
 
+    @Value("${minio.bucket-name:snapshots}")
+    private String bucketName;
+
     /**
-     * 1. Uploads a file to MinIO
+     * Helper to process Base64 from the Controller
      */
-    public void uploadFile(String bucketName, String fileName, byte[] data) {
+    public String uploadBase64(String base64String, String fileName) {
+        // Remove data:image/jpeg;base64, prefix if it exists
+        String cleanBase64 = base64String.contains(",") ? base64String.split(",")[1] : base64String;
+        byte[] decodedBytes = Base64.getDecoder().decode(cleanBase64);
+
+        uploadFile(bucketName, fileName, decodedBytes);
+        return getTemporaryUrl(bucketName, fileName);
+    }
+
+    public void uploadFile(String bucket, String fileName, byte[] data) {
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(bucketName)
+                .bucket(bucket)
                 .key(fileName)
-                .contentType("image/jpeg") // Adjust this based on file type if needed
+                .contentType("image/jpeg")
                 .build();
 
         s3Client.putObject(putObjectRequest, RequestBody.fromBytes(data));
-        System.out.println("Upload complete to bucket: " + bucketName);
     }
 
-    /**
-     * 2. Generates a temporary 15-minute link to view the file
-     */
-    public String getTemporaryUrl(String bucketName, String key) {
+    public String getTemporaryUrl(String bucket, String key) {
         try (S3Presigner presigner = S3Presigner.builder()
                 .endpointOverride(URI.create(endpoint))
                 .credentialsProvider(StaticCredentialsProvider.create(
@@ -57,14 +65,9 @@ public class FileService {
                 .region(Region.US_EAST_1)
                 .build()) {
 
-            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(key)
-                    .build();
-
             GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
                     .signatureDuration(Duration.ofMinutes(15))
-                    .getObjectRequest(getObjectRequest)
+                    .getObjectRequest(GetObjectRequest.builder().bucket(bucket).key(key).build())
                     .build();
 
             return presigner.presignGetObject(presignRequest).url().toString();

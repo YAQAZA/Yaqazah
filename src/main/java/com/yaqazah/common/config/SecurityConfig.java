@@ -39,6 +39,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/swagger-resources/**",
                                 "/webjars/**"
+//                                ,"/api/detections/**"
                         ).permitAll()
 
                         // 2. Admin-Only Endpoints

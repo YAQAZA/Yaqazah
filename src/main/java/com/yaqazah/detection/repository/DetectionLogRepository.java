@@ -6,6 +6,6 @@ import java.util.List;
 import java.util.UUID;
 
 public interface DetectionLogRepository extends JpaRepository<DetectionLog, UUID> {
-    List<DetectionLog> findBySessionId(UUID sessionId);
+    List<DetectionLog> findBySession_SessionId(UUID sessionSessionId);
     List<DetectionLog> findByTimestampStartingWith(String date);
 }

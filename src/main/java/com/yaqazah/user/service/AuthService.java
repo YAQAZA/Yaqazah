@@ -2,7 +2,7 @@ package com.yaqazah.user.service;
 
 import com.yaqazah.user.model.*;
 import com.yaqazah.user.repository.*;
-import com.yaqazah.email.service.EmailService;
+import com.yaqazah.infrastructure.email.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

@@ -1,11 +1,16 @@
 spring:
   application:
     name: Yaqazah
+
   datasource:
-    url: jdbc:postgresql://localhost:5432/yaqazah_db
-    username: postgres
-    password: "0000"
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/yaqazah_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:0000}
     driver-class-name: org.postgresql.Driver
+
+  sql:
+    init:
+      mode: always
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
@@ -19,8 +24,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: your-email@gmail.com
-    password: your-app-password
+    username: ${MAIL_USERNAME:your-email@gmail.com}
+    password: ${MAIL_PASSWORD:your-app-password}
     properties:
       mail:
         smtp:
@@ -30,11 +35,63 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
   cache:
     type: redis
+
+# CUSTOM ENCRYPTION SETTINGS
+encryption:
+  key: ${DB_ENCRYPTION_KEY:my-32-char-ultra-secret-key-12345}
+
+# MINIO CONFIGURATION
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket-name: ${MINIO_BUCKET:snapshots}
+
+
+
+########################################################
+#spring:
+#  application:
+#    name: Yaqazah
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/yaqazah_db
+#    username: postgres
+#    password: "0000"
+#    driver-class-name: org.postgresql.Driver
+#
+#  jpa:
+#    database-platform: org.hibernate.dialect.PostgreSQLDialect
+#    hibernate:
+#      ddl-auto: update
+#    show-sql: true
+#    properties:
+#      hibernate:
+#        format_sql: true
+#
+#  mail:
+#    host: smtp.gmail.com
+#    port: 587
+#    username: your-email@gmail.com
+#    password: your-app-password
+#    properties:
+#      mail:
+#        smtp:
+#          auth: true
+#          starttls:
+#            enable: true
+#
+#  data:
+#    redis:
+#      host: localhost
+#      port: 6379
+#
+#  cache:
+#    type: redis
 
 # MINIO GOES HERE, AT THE ROOT LEVEL (NO INDENTATION)
 #minio:

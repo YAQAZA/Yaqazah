@@ -75,7 +75,11 @@ public class AuthController {
 
     // 3. LOG IN
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestParam String email, @RequestParam String password) {
+    public ResponseEntity<String> login(@RequestBody Map<String, String> payload) {
+
+        String email = payload.get("email");
+        String password = payload.get("password");
+
         // Standard authentication
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
 
@@ -85,15 +89,14 @@ public class AuthController {
         return ResponseEntity.ok(jwt);
     }
 
-    // 4. FORGOT PASSWORD (Trigger OTP)
+// 4. FORGOT PASSWORD (Trigger OTP)
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@RequestParam String email) {
+    public ResponseEntity<String> forgotPassword(@RequestBody Map<String, String> payload) {
         try {
+            String email = payload.get("email");
             authService.sendPasswordResetOtp(email);
             return ResponseEntity.ok("Reset code sent to your email.");
         } catch (IllegalArgumentException e) {
-            // For security, you could return 200 even if email is not found,
-            // but 400 is common for debugging.
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

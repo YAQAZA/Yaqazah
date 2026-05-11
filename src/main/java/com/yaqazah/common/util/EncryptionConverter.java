@@ -1,0 +1,47 @@
+package com.yaqazah.common.util;
+
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import java.util.Base64;
+
+@Component
+@Converter
+public class EncryptionConverter implements AttributeConverter<String, String> {
+
+    private static final String ALGORITHM = "AES";
+    private static String SECRET;
+
+    // This "injects" the property into a static variable so the Converter can see it
+    @Value("${encryption.key}")
+    public void setSecret(String secret) {
+        EncryptionConverter.SECRET = secret;
+    }
+
+    @Override
+    public String convertToDatabaseColumn(String attribute) {
+        if (attribute == null) return null;
+        try {
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(SECRET.getBytes(), ALGORITHM));
+            return Base64.getEncoder().encodeToString(cipher.doFinal(attribute.getBytes()));
+        } catch (Exception e) {
+            throw new RuntimeException("Encryption failed", e);
+        }
+    }
+
+    @Override
+    public String convertToEntityAttribute(String dbData) {
+        if (dbData == null) return null;
+        try {
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(SECRET.getBytes(), ALGORITHM));
+            return new String(cipher.doFinal(Base64.getDecoder().decode(dbData)));
+        } catch (Exception e) {
+            throw new RuntimeException("Decryption failed", e);
+        }
+    }
+}

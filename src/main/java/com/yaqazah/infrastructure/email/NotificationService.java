@@ -16,39 +16,47 @@ public class NotificationService {
 
     private final EmailService emailService;
     private final StringRedisTemplate redisTemplate;
-
-    // SecureRandom is thread-safe and cryptographically strong
     private static final SecureRandom secureRandom = new SecureRandom();
 
     public static final String PREFIX_VERIFY = "OTP_VERIFY:";
     public static final String PREFIX_RESET = "OTP_RESET:";
+    private static final String PREFIX_LIMIT = "LIMIT:"; // For anti-spam
 
     @Async
     public void sendVerificationEmail(String email) {
-        generateAndSendOtp(email, PREFIX_VERIFY, "Verify your Yaqazah Account", 15);
+        checkRateLimitAndSend(email, PREFIX_VERIFY, "Verify your Yaqazah Account", 15);
     }
 
     @Async
     public void sendPasswordResetOtp(String email) {
-        generateAndSendOtp(email, PREFIX_RESET, "Password Reset Request", 10);
+        checkRateLimitAndSend(email, PREFIX_RESET, "Password Reset Request", 10);
     }
 
-    private void generateAndSendOtp(String email, String prefix, String subject, int minutes) {
+    private void checkRateLimitAndSend(String email, String prefix, String subject, int minutes) {
+        String limitKey = PREFIX_LIMIT + prefix + email;
+
+        // Check if a request was made in the last 60 seconds
+        Boolean isLimited = redisTemplate.hasKey(limitKey);
+        if (Boolean.TRUE.equals(isLimited)) {
+            log.warn("Spam detected: {} is requesting OTP too fast.", email);
+            // Since this is @Async, we log it. The Controller should ideally
+            // check the rate limit before calling this if you want to show a 429 error.
+            return;
+        }
+
         try {
-            // Generate a secure 6-digit OTP
             String otp = String.format("%06d", secureRandom.nextInt(1000000));
 
-            // Store in Redis
+            // Store the OTP
             redisTemplate.opsForValue().set(prefix + email, otp, minutes, TimeUnit.MINUTES);
 
-            // Use the EmailService tool to send it
-            String messageBody = "Your code is: " + otp + "\nThis code will expire in " + minutes + " minutes.";
-            emailService.sendEmail(email, subject, messageBody);
+            // Set the Rate Limit key for 60 seconds
+            redisTemplate.opsForValue().set(limitKey, "LOCKED", 1, TimeUnit.MINUTES);
 
-            log.info("Successfully sent {} to {}", subject, email);
+            emailService.sendEmail(email, subject, "Your code is: " + otp);
+            log.info("OTP sent successfully to {}", email);
         } catch (Exception e) {
-            // Crucial: Async errors must be caught and logged
-            log.error("Failed to send notification to {}: {}", email, e.getMessage());
+            log.error("Failed to send OTP to {}: {}", email, e.getMessage());
         }
     }
 }

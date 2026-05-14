@@ -36,20 +36,25 @@ public class AuthService {
 
         if (existingUserOpt.isPresent()) {
             User existing = existingUserOpt.get();
-            if (existing.getStatus() != UserStatus.PENDING_VERIFICATION) {
-                throw new IllegalArgumentException("User already exists and is verified!");
+
+            // If they are already ACTIVE, then the email is truly "taken"
+            if (existing.getStatus() == UserStatus.ACTIVE) {
+                throw new IllegalArgumentException("Email is already taken and verified!");
             }
+
+            // If they are PENDING, resend the mail
             notificationService.sendVerificationEmail(existing.getEmail());
-            return "User exists but not verified. New OTP sent.";
+            return "Verification code resent! Please check your inbox.";
         }
 
+        // New User logic
         user.setRole(Role.INDEPENDENT_DRIVER);
         user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
         user.setStatus(UserStatus.PENDING_VERIFICATION);
         userRepository.save(user);
 
         notificationService.sendVerificationEmail(user.getEmail());
-        return "User registered! Check your email.";
+        return "User registered! Check your email for the code.";
     }
 
     @Transactional

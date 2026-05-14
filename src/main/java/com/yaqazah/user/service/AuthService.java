@@ -39,18 +39,16 @@ public class AuthService {
             if (existing.getStatus() != UserStatus.PENDING_VERIFICATION) {
                 throw new IllegalArgumentException("User already exists and is verified!");
             }
-            // Now correctly ASYNC
             notificationService.sendVerificationEmail(existing.getEmail());
             return "User exists but not verified. New OTP sent.";
         }
 
         user.setRole(Role.INDEPENDENT_DRIVER);
         user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
+        user.setStatus(UserStatus.PENDING_VERIFICATION);
         userRepository.save(user);
 
-        // Now correctly ASYNC
         notificationService.sendVerificationEmail(user.getEmail());
-
         return "User registered! Check your email.";
     }
 
@@ -78,6 +76,14 @@ public class AuthService {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
         UserDetails userDetails = userDetailsService.loadUserByUsername(email);
         return jwtUtil.generateToken(userDetails);
+    }
+
+    public void requestPasswordReset(String email) {
+        // Business logic: check if user exists before bothering the mail server
+        if (userRepository.existsByEmail(email)) {
+            notificationService.sendPasswordResetOtp(email);
+        }
+        // No exception thrown if missing to prevent user discovery attacks
     }
 
     @Transactional

@@ -20,7 +20,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     // CHANGE: deleteByCompanyId becomes deleteByCompany_CompanyId
     void deleteByCompany_CompanyIdAndRole(UUID companyId, Role role);
-
+    boolean existsByEmail(String email);
     @Query("SELECT new com.yaqazah.report.dto.DriverSessionReportDto(" +
             "u.userId, u.fullName, s.sessionId, s.startTime, s.endTime, s.durationHours, s.totalAlerts, " +
             "d.eventId, d.timestamp, cast(d.type as string), d.severity, d.valueDetected) " +

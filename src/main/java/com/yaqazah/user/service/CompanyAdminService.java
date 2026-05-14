@@ -2,6 +2,7 @@ package com.yaqazah.user.service;
 
 import com.yaqazah.company.model.Company;
 import com.yaqazah.company.repository.CompanyRepository;
+import com.yaqazah.infrastructure.email.NotificationService;
 import com.yaqazah.user.model.Role;
 import com.yaqazah.user.model.User;
 import com.yaqazah.user.model.UserStatus;
@@ -20,7 +21,7 @@ public class CompanyAdminService {
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AuthService authService;
+    private final NotificationService notificationService; // Added this
 
     @Transactional
     public void addCompanyAdmin(UUID companyId, User newAdmin) {
@@ -37,6 +38,7 @@ public class CompanyAdminService {
         newAdmin.setStatus(UserStatus.PENDING_VERIFICATION);
 
         userRepository.save(newAdmin);
-        authService.sendVerificationEmail(newAdmin.getEmail());
+
+        notificationService.sendVerificationEmail(newAdmin.getEmail());
     }
 }

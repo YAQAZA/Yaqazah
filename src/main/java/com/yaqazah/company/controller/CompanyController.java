@@ -5,7 +5,8 @@ import com.yaqazah.company.service.CompanyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -14,12 +15,13 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+@NullMarked
 @RequestMapping("/api/companies")
 @Tag(name = "Company Management", description = "Endpoints for managing fleets and companies. Restricted to System Admins.")
+@RequiredArgsConstructor
 public class CompanyController {
 
-    @Autowired
-    private CompanyService companyService;
+    private final CompanyService companyService;
 
     @Operation(summary = "Create a new Company", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping("/add")

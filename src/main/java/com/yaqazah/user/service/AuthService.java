@@ -1,99 +1,97 @@
 package com.yaqazah.user.service;
 
-import com.yaqazah.user.model.*;
-import com.yaqazah.user.repository.*;
-import com.yaqazah.infrastructure.email.service.EmailService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.yaqazah.common.security.JwtUtil;
+import com.yaqazah.infrastructure.email.NotificationService;
+import com.yaqazah.user.model.Role;
+import com.yaqazah.user.model.User;
+import com.yaqazah.user.model.UserStatus;
+import com.yaqazah.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
+import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
-    @Autowired private UserRepository userRepository;
-    @Autowired private EmailService emailService;
-    @Autowired private PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final NotificationService notificationService;
+    private final PasswordEncoder passwordEncoder;
+    private final StringRedisTemplate redisTemplate;
+    private final AuthenticationManager authenticationManager;
+    private final UserDetailsService userDetailsService;
+    private final JwtUtil jwtUtil;
 
-    // 1. Inject Redis instead of AuthTokenRepository!
-    @Autowired private StringRedisTemplate redisTemplate;
+    @Transactional
+    public String signup(User user) {
+        Optional<User> existingUserOpt = userRepository.findByEmail(user.getEmail());
 
-    // Prefixes to keep your Redis database organized
-    private static final String PREFIX_VERIFY = "OTP_VERIFY:";
-    private static final String PREFIX_RESET = "OTP_RESET:";
+        if (existingUserOpt.isPresent()) {
+            User existing = existingUserOpt.get();
+            if (existing.getStatus() != UserStatus.PENDING_VERIFICATION) {
+                throw new IllegalArgumentException("User already exists and is verified!");
+            }
+            // Now correctly ASYNC
+            notificationService.sendVerificationEmail(existing.getEmail());
+            return "User exists but not verified. New OTP sent.";
+        }
 
-    @Async
-    public void sendVerificationEmail(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        user.setRole(Role.INDEPENDENT_DRIVER);
+        user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
+        userRepository.save(user);
 
-        String otp = String.format("%06d", new Random().nextInt(999999));
+        // Now correctly ASYNC
+        notificationService.sendVerificationEmail(user.getEmail());
 
-        // 2. Save to Redis with a 15-minute Time-To-Live (TTL)
-        redisTemplate.opsForValue().set(PREFIX_VERIFY + email, otp, 15, TimeUnit.MINUTES);
-
-        emailService.sendEmail(user.getEmail(), "Verify your Yaqazah Account", "Code: " + otp);
+        return "User registered! Check your email.";
     }
 
     @Transactional
-    public void verifyEmail(String email, String otp) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
-        String redisKey = PREFIX_VERIFY + email;
-
-        // 3. Fetch from Redis
+    public String verifyEmail(String email, String otp) {
+        String redisKey = NotificationService.PREFIX_VERIFY + email;
         String storedOtp = redisTemplate.opsForValue().get(redisKey);
 
-        if (storedOtp == null) {
-            throw new IllegalArgumentException("Code has expired or is invalid.");
+        if (storedOtp == null || !storedOtp.equals(otp)) {
+            throw new IllegalArgumentException("Invalid or expired code.");
         }
-        if (!storedOtp.equals(otp)) {
-            throw new IllegalArgumentException("Invalid code.");
-        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
-
-        // 4. Delete from Redis so it can't be reused
         redisTemplate.delete(redisKey);
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+        return jwtUtil.generateToken(userDetails);
     }
 
-    @Async // Don't forget to make this async too!
-    public void sendPasswordResetOtp(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
-        String otp = String.format("%06d", new Random().nextInt(999999));
-
-        // Redis automatically overwrites the old OTP if the user requests a new one!
-        // No manual cleanup needed.
-        redisTemplate.opsForValue().set(PREFIX_RESET + email, otp, 10, TimeUnit.MINUTES);
-
-        emailService.sendEmail(user.getEmail(), "Password Reset Request", "Your reset code is: " + otp);
+    public String login(String email, String password) {
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
+        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+        return jwtUtil.generateToken(userDetails);
     }
 
     @Transactional
     public void resetPassword(String email, String otp, String newPassword) {
+        String redisKey = NotificationService.PREFIX_RESET + email;
+        String storedOtp = redisTemplate.opsForValue().get(redisKey);
+
+        if (storedOtp == null || !storedOtp.equals(otp)) {
+            throw new IllegalArgumentException("Invalid or expired reset code.");
+        }
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        String redisKey = PREFIX_RESET + email;
-        String storedOtp = redisTemplate.opsForValue().get(redisKey);
-
-        if (storedOtp == null) {
-            throw new IllegalArgumentException("Reset code has expired.");
-        }
-        if (!storedOtp.equals(otp)) {
-            throw new IllegalArgumentException("Invalid reset code.");
-        }
-
-        // Update password and clean up Redis
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
         redisTemplate.delete(redisKey);

@@ -1,6 +1,7 @@
 package com.yaqazah.infrastructure.storage.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -18,28 +19,28 @@ import java.time.Duration;
 import java.util.Base64;
 
 @Service
+@RequiredArgsConstructor
+@NullMarked
 public class FileService {
 
-    @Autowired
-    private S3Client s3Client;
+    private final S3Client s3Client;
 
     @Value("${minio.endpoint}")
-    private String endpoint;
+    private String endpoint = "";
 
     @Value("${minio.access-key}")
-    private String accessKey;
+    private String accessKey = "";
 
     @Value("${minio.secret-key}")
-    private String secretKey;
+    private String secretKey = "";
 
     @Value("${minio.bucket-name:snapshots}")
-    private String bucketName;
+    private String bucketName = "snapshots";
 
     /**
      * Helper to process Base64 from the Controller
      */
     public String uploadBase64(String base64String, String fileName) {
-        // Remove data:image/jpeg;base64, prefix if it exists
         String cleanBase64 = base64String.contains(",") ? base64String.split(",")[1] : base64String;
         byte[] decodedBytes = Base64.getDecoder().decode(cleanBase64);
 

@@ -2,7 +2,8 @@ package com.yaqazah.company.service;
 
 import com.yaqazah.company.model.Company;
 import com.yaqazah.company.repository.CompanyRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,10 +13,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@NullMarked
+@RequiredArgsConstructor
 public class CompanyService {
 
-    @Autowired
-    private CompanyRepository companyRepository;
+    private final CompanyRepository companyRepository;
 
     @Transactional
     public Company createCompany(Company company) {

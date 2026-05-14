@@ -1,7 +1,6 @@
 package com.yaqazah.user.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.yaqazah.common.util.EncryptionConverter;
 import com.yaqazah.company.model.Company;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -25,7 +24,8 @@ public class User {
     private String email;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String passwordHash;
-//    @Convert(converter = EncryptionConverter.class)
+    //    @Convert(converter = EncryptionConverter.class)
+    @Column(nullable = false)
     private String fullName;
 
     @Enumerated(EnumType.STRING)

@@ -1,15 +1,16 @@
 package com.yaqazah.common.config;
 
 import com.yaqazah.common.security.JwtAuthenticationFilter;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity; // <-- IMPORT
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy; // <-- IMPORT
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -17,41 +18,32 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // <-- ADD THIS: Enables @PreAuthorize in your controllers
+@EnableMethodSecurity // Enables @PreAuthorize in your controllers
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Autowired
-    private JwtAuthenticationFilter jwtRequestFilter;
+    private final JwtAuthenticationFilter jwtRequestFilter;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
-                // --- ADD THIS BLOCK: Tells Spring NOT to use cookies/sessions ---
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
+        http.csrf(AbstractHttpConfigurer::disable)
+                // Tells Spring NOT to use cookies/sessions
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // ----------------------------------------------------------------
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Public Endpoints & Swagger Documentation
-                        .requestMatchers(
-                                "/api/auth/**",
-                                "/error",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/swagger-resources/**",
-                                "/webjars/**"
+                                // 1. Public Endpoints & Swagger Documentation
+                                .requestMatchers(
+                                        "/api/auth/**",
+                                        "/error",
+                                        "/v3/api-docs/**",
+                                        "/swagger-ui/**",
+                                        "/swagger-ui.html",
+                                        "/swagger-resources/**",
+                                        "/webjars/**"
+//                                        ,"/api/test/**"
 //                                ,"/api/detections/**"
-                        ).permitAll()
-
-                        // 2. Admin-Only Endpoints
-                        // Note: hasRole("COMPANYADM") expects your JWT claims to contain "ROLE_COMPANYADM"
-                        .requestMatchers("/api/analytics/company/**").hasRole("COMPANYADM")
-                        .requestMatchers("/api/reports/**").hasAnyRole("COMPANYADM", "COMPANYADMIN")
-
-                        // 3. Driver-Only Endpoints
-                        .requestMatchers("/api/sessions/**").hasRole("DRIVER")
-
-                        // 4. Any other endpoint just requires a valid JWT token
-                        .anyRequest().authenticated()
+                                ).permitAll()
+                                // 4. Any other endpoint just requires a valid JWT token
+                                .anyRequest().authenticated()
                 );
 
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
@@ -65,7 +57,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) {
         return authConfig.getAuthenticationManager();
     }
 }

@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
 @EnableAsync // Turns on background processing
-//@EnableCaching
+@EnableCaching
 public class YaqazahApplication {
 
     public static void main(String[] args) {

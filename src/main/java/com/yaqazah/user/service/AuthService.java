@@ -37,17 +37,23 @@ public class AuthService {
         if (existingUserOpt.isPresent()) {
             User existing = existingUserOpt.get();
 
-            // If they are already ACTIVE, then the email is truly "taken"
+            // 1. If they are already ACTIVE, this email is genuinely gone.
             if (existing.getStatus() == UserStatus.ACTIVE) {
-                throw new IllegalArgumentException("Email is already taken and verified!");
+                throw new IllegalArgumentException("Email is already taken!");
             }
 
-            // If they are PENDING, resend the mail
+            // 2. ANTI-SPAM: Check if they are clicking too fast
+            String limitKey = "LIMIT:OTP_VERIFY:" + existing.getEmail();
+            if (Boolean.TRUE.equals(redisTemplate.hasKey(limitKey))) {
+                throw new IllegalArgumentException("Please wait 60 seconds before requesting another code.");
+            }
+
+            // 3. If they are PENDING, resend the mail
             notificationService.sendVerificationEmail(existing.getEmail());
             return "Verification code resent! Please check your inbox.";
         }
 
-        // New User logic
+        // 4. New User Logic
         user.setRole(Role.INDEPENDENT_DRIVER);
         user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
         user.setStatus(UserStatus.PENDING_VERIFICATION);

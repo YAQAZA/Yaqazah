@@ -13,7 +13,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
@@ -22,12 +25,18 @@ import java.util.Map;
 @Tag(name = "Authentication")
 public class AuthController {
 
-    @Autowired private AuthenticationManager authenticationManager;
-    @Autowired private UserDetailsService userDetailsService;
-    @Autowired private JwtUtil jwtUtil;
-    @Autowired private UserRepository userRepository;
-    @Autowired private PasswordEncoder passwordEncoder;
-    @Autowired private AuthService authService;
+    @Autowired
+    private AuthenticationManager authenticationManager;
+    @Autowired
+    private UserDetailsService userDetailsService;
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    @Autowired
+    private AuthService authService;
 
     // 1. SIGN UP
     @PostMapping("/signup")
@@ -88,7 +97,7 @@ public class AuthController {
         return ResponseEntity.ok(jwt);
     }
 
-// 4. FORGOT PASSWORD (Trigger OTP)
+    // 4. FORGOT PASSWORD (Trigger OTP)
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestBody Map<String, String> payload) {
         try {

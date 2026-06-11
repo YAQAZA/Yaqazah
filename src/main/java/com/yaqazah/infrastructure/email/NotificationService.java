@@ -68,9 +68,7 @@ public class NotificationService {
 
             // 2. Store it in Redis using the RESET prefix.
             // We give them 24 hours (instead of 10 mins) to set their initial password.
-            redisTemplate.opsForValue().set(PREFIX_RESET + email, otp, 24, TimeUnit.HOURS);
-
-            // 3. Construct the Magic Link for your frontend
+            redisTemplate.opsForValue().set(PREFIX_RESET + email, otp, 3, TimeUnit.DAYS);
             // (Replace "localhost:3000" with your actual frontend URL)
             String frontendResetUrl = "http://localhost:3000/set-password?email=" + email + "&otp=" + otp;
 

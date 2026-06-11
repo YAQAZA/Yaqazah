@@ -35,10 +35,12 @@ public class CompanyAdminService {
         newAdmin.setRole(Role.COMPANY_ADMIN);
         newAdmin.setCompany(company);
         newAdmin.setPasswordHash(passwordEncoder.encode(newAdmin.getPasswordHash()));
-        newAdmin.setStatus(UserStatus.PENDING_VERIFICATION);
+        newAdmin.setStatus(UserStatus.ACTIVE);
+
+//        newAdmin.setStatus(UserStatus.PENDING_VERIFICATION);
 
         userRepository.save(newAdmin);
 
-        notificationService.sendVerificationEmail(newAdmin.getEmail());
+        notificationService.sendWelcomePasswordSetEmail(newAdmin.getEmail());
     }
 }

@@ -1,6 +1,7 @@
 package com.yaqazah.user.service;
 
 import com.yaqazah.infrastructure.email.NotificationService;
+import com.yaqazah.user.model.Gender;
 import com.yaqazah.user.model.Role;
 import com.yaqazah.user.model.User;
 import com.yaqazah.user.model.UserStatus;
@@ -36,12 +37,15 @@ public class FleetDriverService {
         // Link driver to the same company as the Admin
         newDriver.setCompany(loggedInAdmin.getCompany());
         newDriver.setPasswordHash(passwordEncoder.encode(newDriver.getPasswordHash()));
-        newDriver.setStatus(UserStatus.PENDING_VERIFICATION);
+        newDriver.setStatus(UserStatus.ACTIVE);
+//        newDriver.setStatus(UserStatus.PENDING_VERIFICATION);
+        newDriver.setFullName(newDriver.getFullName() != null ? newDriver.getFullName() : "Unnamed Driver");
+        newDriver.setEmail(newDriver.getEmail());
+        newDriver.setGender(newDriver.getGender() != null ? newDriver.getGender() : Gender.MALE);
 
         userRepository.save(newDriver);
 
-        // FIX: Call notificationService for the background email task
-        notificationService.sendVerificationEmail(newDriver.getEmail());
+        notificationService.sendWelcomePasswordSetEmail(newDriver.getEmail());
     }
 
     @Transactional

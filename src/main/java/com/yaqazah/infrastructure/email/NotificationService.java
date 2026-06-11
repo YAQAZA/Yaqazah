@@ -59,4 +59,33 @@ public class NotificationService {
             log.error("Failed to send OTP to {}: {}", email, e.getMessage());
         }
     }
+
+    @Async
+    public void sendWelcomePasswordSetEmail(String email) {
+        try {
+            // 1. Generate an OTP (acting as a secure token)
+            String otp = String.format("%06d", secureRandom.nextInt(1000000));
+
+            // 2. Store it in Redis using the RESET prefix.
+            // We give them 24 hours (instead of 10 mins) to set their initial password.
+            redisTemplate.opsForValue().set(PREFIX_RESET + email, otp, 24, TimeUnit.HOURS);
+
+            // 3. Construct the Magic Link for your frontend
+            // (Replace "localhost:3000" with your actual frontend URL)
+            String frontendResetUrl = "http://localhost:3000/set-password?email=" + email + "&otp=" + otp;
+
+            // 4. Send the email
+            String subject = "Welcome to Yaqazah! Please set your password";
+            String body = "Hello,\n\n" +
+                    "Your account has been created by your administrator.\n" +
+                    "Please click the link below to set your secure password and activate your account:\n\n" +
+                    frontendResetUrl;
+
+            emailService.sendEmail(email, subject, body);
+            log.info("Welcome/Set Password link sent successfully to {}", email);
+
+        } catch (Exception e) {
+            log.error("Failed to send Welcome link to {}: {}", email, e.getMessage());
+        }
+    }
 }

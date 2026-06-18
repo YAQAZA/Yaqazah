@@ -30,6 +30,7 @@ public class DashboardController {
         this.userRepository = userRepository;
     }
 
+    //new Code
     @Operation(summary = "Company dashboard", description = "Aggregated analytics for the authenticated company admin's fleet.")
     @PreAuthorize("hasAnyRole('COMPANY_ADMIN', 'ADMIN')")
     @GetMapping

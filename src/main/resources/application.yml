@@ -52,11 +52,16 @@ jwt:
 encryption:
   key: ${DB_ENCRYPTION_KEY:my-32-char-ultra-secret-key-12345}
 
-minio:
-  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
-  access-key: ${MINIO_ACCESS_KEY:minioadmin}
-  secret-key: ${MINIO_SECRET_KEY:minioadmin}
-  bucket-name: ${MINIO_BUCKET:snapshots}
+#minio:
+#  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+#  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+#  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+#  bucket-name: ${MINIO_BUCKET:snapshots}
+
+cloudinary:
+  cloud-name: ${cloudinary_cloud_name}
+  api-key: ${cloudinary_api_key}
+  api-secret: ${cloudinary_api_secret}
 
 
 

@@ -1,10 +1,12 @@
 package com.yaqazah.user.controller;
 
+import com.yaqazah.user.dto.CompanyAdminDto;
 import com.yaqazah.user.model.User;
 import com.yaqazah.user.service.CompanyAdminService;
 import com.yaqazah.user.service.UserProfileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,17 +24,26 @@ public class AdminUserController {
     private final CompanyAdminService companyAdminService;
     private final UserProfileService userProfileService;
 
+//    @PostMapping("/companies/{companyId}/add-company-admin")
+//    @Operation(summary = "Add a Company Admin", description = "Creates a new Company Admin and assigns them to the specified company.")
+//    public ResponseEntity<String> addCompanyAdminUser(
+//            @PathVariable UUID companyId,
+//            @RequestBody User user) {
+//        try {
+//            companyAdminService.addCompanyAdmin(companyId, user);
+//            return ResponseEntity.ok("Company Admin added successfully to company ID: " + companyId);
+//        } catch (IllegalArgumentException e) {
+//            return ResponseEntity.badRequest().body(e.getMessage());
+//        }
+//    }
+
     @PostMapping("/companies/{companyId}/add-company-admin")
-    @Operation(summary = "Add a Company Admin", description = "Creates a new Company Admin and assigns them to the specified company.")
     public ResponseEntity<String> addCompanyAdminUser(
             @PathVariable UUID companyId,
-            @RequestBody User user) {
-        try {
-            companyAdminService.addCompanyAdmin(companyId, user);
-            return ResponseEntity.ok("Company Admin added successfully to company ID: " + companyId);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+            @Valid @RequestBody CompanyAdminDto req) {
+
+        companyAdminService.addCompanyAdmin(companyId, req);
+        return ResponseEntity.ok("Company Admin created successfully");
     }
 
     @DeleteMapping("/{userId}")

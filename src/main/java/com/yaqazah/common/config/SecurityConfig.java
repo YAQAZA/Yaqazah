@@ -40,6 +40,7 @@ public class SecurityConfig {
                                         "/swagger-resources/**",
                                         "/webjars/**"
                                                 ,"/api/files/**"
+                                        ,"/api/redis-test/**"
 //                                        ,"/api/test/**"
 //                                ,"/api/detections/**"
                                 ).permitAll()

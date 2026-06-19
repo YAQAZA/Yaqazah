@@ -98,8 +98,13 @@ cloudinary:
 #
 #  data:
 #    redis:
-#      host: localhost
+#      host: neutral-doberman-151329.upstash.io
 #      port: 6379
+#      password: gQAAAAAAAk8hAAIgcDE1ZDBkNzYzOGI4ZGQ0NzBhODlmN2IxMTM1YjhiOTY2Ng
+#      ssl:
+#        enabled: true
+#  cache:
+#    type: redis
 #
 #  cache:
 #    type: redis

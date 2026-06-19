@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class UserProfileService {
+public class UserService {
 
     private final UserRepository userRepository;
 

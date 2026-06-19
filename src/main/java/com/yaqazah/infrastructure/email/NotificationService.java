@@ -71,7 +71,7 @@ public class NotificationService {
             redisTemplate.opsForValue().set(PREFIX_RESET + email, otp, 3, TimeUnit.DAYS);
             //3 Link for frontend
             // (Replace "localhost:3000" with your actual frontend URL)
-            String frontendResetUrl = "http://localhost:3000/set-password?email=" + email + "&otp=" + otp;
+            String frontendResetUrl = "https://localhost:3000/set-password";
 
             // 4. Send the email
             String subject = "Welcome to Yaqazah! Please set your password";

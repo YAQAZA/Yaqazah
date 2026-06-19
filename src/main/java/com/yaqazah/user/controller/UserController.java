@@ -1,7 +1,7 @@
 package com.yaqazah.user.controller;
 
 import com.yaqazah.user.model.User;
-import com.yaqazah.user.service.UserProfileService;
+import com.yaqazah.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserProfileService userProfileService;
+    private final UserService userService;
 
     private String getCurrentUserEmail() {
         return SecurityContextHolder.getContext().getAuthentication().getName();
@@ -29,7 +29,7 @@ public class UserController {
     @Operation(summary = "Get My Profile", description = "Fetches the profile details of the currently authenticated user.")
     public ResponseEntity<User> getMyProfile() {
         String email = getCurrentUserEmail();
-        User user = userProfileService.findByEmail(email);
+        User user = userService.findByEmail(email);
         return ResponseEntity.ok(user);
     }
 
@@ -40,7 +40,7 @@ public class UserController {
             String newName = payload.get("fullName");
             String email = getCurrentUserEmail();
 
-            userProfileService.updateUserName(email, newName);
+            userService.updateUserName(email, newName);
             return ResponseEntity.ok("Name updated successfully!");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -51,8 +51,8 @@ public class UserController {
     @Operation(summary = "Delete My Account", description = "Permanently deletes the currently authenticated user's account.")
     public ResponseEntity<String> deleteMyAccount() {
         try {
-            User currentUser = userProfileService.findByEmail(getCurrentUserEmail());
-            userProfileService.deleteAccount(currentUser.getUserId());
+            User currentUser = userService.findByEmail(getCurrentUserEmail());
+            userService.deleteAccount(currentUser.getUserId());
             return ResponseEntity.ok("Your account has been deleted successfully.");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

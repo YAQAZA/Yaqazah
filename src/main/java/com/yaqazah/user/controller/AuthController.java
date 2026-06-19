@@ -1,5 +1,6 @@
 package com.yaqazah.user.controller;
 
+import com.yaqazah.user.dto.CompanyOwnerRegistrationDto;
 import com.yaqazah.user.model.User;
 import com.yaqazah.user.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,6 +25,18 @@ public class AuthController {
     public ResponseEntity<String> signup(@RequestBody User user) {
         try {
             String message = authService.signup(user);
+            return ResponseEntity.ok(message);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/register-owner")
+    @Operation(summary = "Register a new Company Owner and create their Company workspace")
+    public ResponseEntity<String> registerCompanyOwner(@RequestBody CompanyOwnerRegistrationDto request) {
+        try {
+            // Now captures the dynamic message (fresh signup vs. resend OTP) from the service
+            String message = authService.registerCompanyOwner(request);
             return ResponseEntity.ok(message);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

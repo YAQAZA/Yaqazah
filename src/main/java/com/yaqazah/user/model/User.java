@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.UUID;
+import java.time.Instant;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Setter
 @Getter
@@ -42,4 +44,8 @@ public class User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "companyId")
     private Company company;
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private Instant insertedAt;
 }

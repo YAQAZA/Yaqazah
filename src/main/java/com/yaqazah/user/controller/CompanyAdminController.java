@@ -1,7 +1,7 @@
 package com.yaqazah.user.controller;
 
 import com.yaqazah.user.model.User;
-import com.yaqazah.user.service.FleetDriverService;
+import com.yaqazah.user.service.CompanyAdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +19,9 @@ import java.util.UUID;
 @PreAuthorize("hasRole('COMPANY_ADMIN')")
 @Tag(name = "Company Driver Management", description = "Endpoints for Company Admins to manage their fleet drivers")
 @RequiredArgsConstructor
-public class CompanyDriverController {
+public class CompanyAdminController {
 
-    private final FleetDriverService fleetDriverService;
+    private final CompanyAdminService companyAdminService;
 
     private String getCurrentAdminEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -32,7 +32,7 @@ public class CompanyDriverController {
     @Operation(summary = "Add a new Fleet Driver", description = "Creates a new driver account linked to the logged-in admin's company.")
     public ResponseEntity<String> addFleetDriver(@RequestBody User newDriver) {
         try {
-            fleetDriverService.addFleetDriver(newDriver, getCurrentAdminEmail());
+            companyAdminService.addFleetDriver(newDriver, getCurrentAdminEmail());
             return ResponseEntity.ok("Fleet Driver added successfully to your company!");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -47,7 +47,7 @@ public class CompanyDriverController {
             @PathVariable UUID driverId,
             @RequestBody User updatedDriverData) {
         try {
-            fleetDriverService.updateFleetDriver(driverId, updatedDriverData, getCurrentAdminEmail());
+            companyAdminService.updateFleetDriver(driverId, updatedDriverData, getCurrentAdminEmail());
             return ResponseEntity.ok("Fleet Driver updated successfully!");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

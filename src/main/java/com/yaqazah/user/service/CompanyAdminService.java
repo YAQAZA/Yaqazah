@@ -1,14 +1,13 @@
 package com.yaqazah.user.service;
 
-import com.yaqazah.company.model.Company;
-import com.yaqazah.company.repository.CompanyRepository;
 import com.yaqazah.infrastructure.email.NotificationService;
-import com.yaqazah.user.dto.CompanyAdminDto;
+import com.yaqazah.user.model.Gender;
 import com.yaqazah.user.model.Role;
 import com.yaqazah.user.model.User;
 import com.yaqazah.user.model.UserStatus;
 import com.yaqazah.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,56 +16,66 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@NullMarked
 public class CompanyAdminService {
 
     private final UserRepository userRepository;
-    private final CompanyRepository companyRepository;
     private final PasswordEncoder passwordEncoder;
-    private final NotificationService notificationService; // Added this
-
-//    @Transactional
-//    public void addCompanyAdmin(UUID companyId, User newAdmin) {
-//        if (userRepository.findByEmail(newAdmin.getEmail()).isPresent()) {
-//            throw new IllegalArgumentException("Email is already taken!");
-//        }
-//
-//        Company company = companyRepository.findById(companyId)
-//                .orElseThrow(() -> new IllegalArgumentException("Company not found."));
-//
-//        newAdmin.setRole(Role.COMPANY_ADMIN);
-//        newAdmin.setCompany(company);
-//        newAdmin.setPasswordHash(passwordEncoder.encode(newAdmin.getPasswordHash()));
-//        newAdmin.setStatus(UserStatus.ACTIVE);
-//
-////        newAdmin.setStatus(UserStatus.PENDING_VERIFICATION);
-//
-//        userRepository.save(newAdmin);
-//
-//        notificationService.sendWelcomePasswordSetEmail(newAdmin.getEmail());
-//    }
+    private final NotificationService notificationService;
 
     @Transactional
-    public void addCompanyAdmin(UUID companyId, CompanyAdminDto req) {
-
-        if (userRepository.findByEmail(req.getEmail()).isPresent()) {
+    public void addFleetDriver(User newDriver, String adminEmail) {
+        if (userRepository.findByEmail(newDriver.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email is already taken!");
         }
 
-        Company company = companyRepository.findById(companyId)
-                .orElseThrow(() -> new IllegalArgumentException("Company not found."));
+        User loggedInAdmin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new IllegalStateException("Admin user not found."));
 
-        User newAdmin = new User();
+        // Set business rules
+        newDriver.setRole(Role.FLEET_DRIVER);
+        // Link driver to the same company as the Admin
+        newDriver.setCompany(loggedInAdmin.getCompany());
+        newDriver.setPasswordHash(passwordEncoder.encode(newDriver.getPasswordHash()));
+        newDriver.setStatus(UserStatus.ACTIVE);
+//        newDriver.setStatus(UserStatus.PENDING_VERIFICATION);
+        newDriver.setFullName(newDriver.getFullName() != null ? newDriver.getFullName() : "Unnamed Driver");
+        newDriver.setEmail(newDriver.getEmail());
+        newDriver.setGender(newDriver.getGender() != null ? newDriver.getGender() : Gender.MALE);
 
-        newAdmin.setEmail(req.getEmail());
-        newAdmin.setFullName(req.getFullName());
+        userRepository.save(newDriver);
 
-        newAdmin.setRole(Role.COMPANY_ADMIN);
-        newAdmin.setCompany(company);
-        newAdmin.setPasswordHash(passwordEncoder.encode(req.getPassword()));
-        newAdmin.setStatus(UserStatus.ACTIVE);
+        notificationService.sendWelcomePasswordSetEmail(newDriver.getEmail());
+    }
 
-        userRepository.save(newAdmin);
+    @Transactional
+    public void updateFleetDriver(UUID driverId, User updatedData, String adminEmail) {
+        User loggedInAdmin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new IllegalStateException("Admin user not found."));
 
-        notificationService.sendWelcomePasswordSetEmail(newAdmin.getEmail());
+        User existingDriver = userRepository.findById(driverId)
+                .orElseThrow(() -> new IllegalArgumentException("Driver not found."));
+
+        // Security Check: Is this a fleet driver?
+        if (existingDriver.getRole() != Role.FLEET_DRIVER) {
+            throw new IllegalArgumentException("Target user is not a fleet driver.");
+        }
+
+        // Security Check: Does this driver belong to the Admin's company?
+        if (existingDriver.getCompany() == null ||
+                !existingDriver.getCompany().getCompanyId().equals(loggedInAdmin.getCompany().getCompanyId())) {
+            throw new IllegalStateException("You are not authorized to edit drivers outside your company.");
+        }
+
+        // Apply updates
+        if (updatedData.getFullName() != null) existingDriver.setFullName(updatedData.getFullName());
+        if (updatedData.getGender() != null) existingDriver.setGender(updatedData.getGender());
+        if (updatedData.getStatus() != null) existingDriver.setStatus(updatedData.getStatus());
+
+        if (updatedData.getPasswordHash() != null && !updatedData.getPasswordHash().trim().isEmpty()) {
+            existingDriver.setPasswordHash(passwordEncoder.encode(updatedData.getPasswordHash()));
+        }
+
+        userRepository.save(existingDriver);
     }
 }

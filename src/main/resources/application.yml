@@ -63,11 +63,16 @@ encryption:
 #  secret-key: ${MINIO_SECRET_KEY:minioadmin}
 #  bucket-name: ${MINIO_BUCKET:snapshots}
 
+azure:
+  storage:
+    connection-string: ${AZURE_STORAGE_CONNECTION_STRING:fake-connection-string-so-github-passes}
+    container-name: ${AZURE_STORAGE_CONTAINER_NAME:fake-container-name}
+
+
 cloudinary:
   cloud-name: ${cloudinary_cloud_name:fake-cloud-name}
   api-key: ${cloudinary_api_key:fake-api-key}
   api-secret: ${cloudinary_api_secret:fake-api-secret}
-
 
 
 ########################################################

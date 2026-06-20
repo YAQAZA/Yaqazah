@@ -1,10 +1,11 @@
 package com.yaqazah.infrastructure.storage.service;
 
-import com.yaqazah.infrastructure.storage.service.FileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/files")
@@ -14,7 +15,7 @@ public class FileController {
     private final FileService fileService;
 
     /**
-     * Endpoint to upload a MultipartFile
+     * Endpoint to upload a standard MultipartFile (e.g., from a web form)
      * POST /api/files/upload
      */
     @PostMapping("/upload")
@@ -32,13 +33,40 @@ public class FileController {
     }
 
     /**
-     * Endpoint to delete a file by its Cloudinary public ID
-     * DELETE /api/files/{publicId}
+     * Endpoint to upload a Base64 image (Used for automated screenshot capturing)
+     * POST /api/files/upload/base64
+     * * Expects a JSON body like:
+     * {
+     * "image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABA...",
+     * "fileName": "driver-distracted-timestamp.jpg"
+     * }
      */
-    @DeleteMapping("/{publicId}")
-    public ResponseEntity<String> deleteFile(@PathVariable String publicId) {
+
+    @PostMapping("/upload/base64")
+    public ResponseEntity<String> uploadBase64(@RequestBody Map<String, String> payload) {
+        String base64String = payload.get("image");
+        String fileName = payload.get("fileName");
+
+        if (base64String == null || base64String.isEmpty() || fileName == null || fileName.isEmpty()) {
+            return ResponseEntity.badRequest().body("Image data and fileName are required");
+        }
+
         try {
-            fileService.deleteFile(publicId);
+            String fileUrl = fileService.uploadBase64(base64String, fileName);
+            return ResponseEntity.ok(fileUrl);
+        } catch (RuntimeException e) {
+            return ResponseEntity.internalServerError().body("Failed to upload screenshot: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Endpoint to delete a file by its Azure Blob name
+     * DELETE /api/files/{fileName}
+     */
+    @DeleteMapping("/{fileName}")
+    public ResponseEntity<String> deleteFile(@PathVariable String fileName) {
+        try {
+            fileService.deleteFile(fileName);
             return ResponseEntity.ok("File deleted successfully");
         } catch (RuntimeException e) {
             return ResponseEntity.internalServerError().body("Failed to delete file: " + e.getMessage());

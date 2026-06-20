@@ -1,101 +1,190 @@
 package com.yaqazah.infrastructure.storage.service;
 
-
-import com.cloudinary.Cloudinary;
-import com.cloudinary.utils.ObjectUtils;
+import com.azure.storage.blob.BlobClient;
+import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.blob.models.BlobHttpHeaders;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Base64;
-import java.util.Map;
-
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class FileService {
 
+    private final BlobServiceClient blobServiceClient;
 
-    private final Cloudinary cloudinary;
-
+    @Value("${azure.storage.container-name}")
+    private String containerName;
 
     /**
-     * Upload Base64 image
+     * Upload Base64 image (Used for automated screenshot capturing)
      */
     public String uploadBase64(String base64String, String fileName) {
-
         try {
+            String cleanBase64 = base64String.contains(",")
+                    ? base64String.split(",")[1]
+                    : base64String;
 
-            String cleanBase64 =
-                    base64String.contains(",")
-                            ? base64String.split(",")[1]
-                            : base64String;
+            byte[] bytes = Base64.getDecoder().decode(cleanBase64);
 
+            BlobContainerClient containerClient = blobServiceClient.getBlobContainerClient(containerName);
+            BlobClient blobClient = containerClient.getBlobClient(fileName);
 
-            byte[] bytes =
-                    Base64.getDecoder().decode(cleanBase64);
+            // Upload byte array stream
+            try (ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes)) {
+                blobClient.upload(inputStream, bytes.length, true);
+            }
 
-            @SuppressWarnings("unchecked")
-            Map<String, Object> result = cloudinary.uploader()
-                    .upload(
-                            bytes,
-                            ObjectUtils.asMap(
-                                    "public_id", fileName
-                            )
-                    );
+            // Set content type explicitly to image/jpeg so browsers view instead of download
+            BlobHttpHeaders headers = new BlobHttpHeaders().setContentType("image/jpeg");
+            blobClient.setHttpHeaders(headers);
 
-
-            return result.get("secure_url").toString();
-
+            return blobClient.getBlobUrl();
 
         } catch (IOException e) {
-            throw new RuntimeException("Upload failed", e);
+            throw new RuntimeException("Azure upload failed", e);
         }
     }
-
 
     /**
-     * Upload MultipartFile
+     * Upload MultipartFile (Used for standard web forms uploads)
      */
     public String uploadFile(MultipartFile file) {
-
         try {
+            BlobContainerClient containerClient = blobServiceClient.getBlobContainerClient(containerName);
 
-            Map result = cloudinary.uploader()
-                    .upload(
-                            file.getBytes(),
-                            ObjectUtils.emptyMap()
-                    );
+            // Generate unique name to prevent collisions
+            String filename = UUID.randomUUID() + "-" + file.getOriginalFilename();
+            BlobClient blobClient = containerClient.getBlobClient(filename);
 
+            blobClient.upload(file.getInputStream(), file.getSize(), true);
 
-            return result.get("secure_url").toString();
+            // Match browser visibility headers
+            BlobHttpHeaders headers = new BlobHttpHeaders().setContentType(file.getContentType());
+            blobClient.setHttpHeaders(headers);
 
+            return blobClient.getBlobUrl();
 
         } catch (IOException e) {
-            throw new RuntimeException("Upload failed", e);
+            throw new RuntimeException("Azure upload failed", e);
         }
     }
-
 
     /**
      * Delete image
      */
-    public void deleteFile(String publicId) {
-
-        try {
-
-            cloudinary.uploader()
-                    .destroy(
-                            publicId,
-                            ObjectUtils.emptyMap()
-                    );
-
-        } catch (IOException e) {
-            throw new RuntimeException("Delete failed", e);
-        }
+    public void deleteFile(String fileName) {
+        BlobContainerClient containerClient = blobServiceClient.getBlobContainerClient(containerName);
+        BlobClient blobClient = containerClient.getBlobClient(fileName);
+        blobClient.deleteIfExists();
     }
 }
+
+//package com.yaqazah.infrastructure.storage.service;
+//
+//
+//import com.cloudinary.Cloudinary;
+//import com.cloudinary.utils.ObjectUtils;
+//import lombok.RequiredArgsConstructor;
+//import org.springframework.stereotype.Service;
+//import org.springframework.web.multipart.MultipartFile;
+//
+//import java.io.IOException;
+//import java.util.Base64;
+//import java.util.Map;
+//
+//
+//@Service
+//@RequiredArgsConstructor
+//public class FileService {
+//
+//
+//    private final Cloudinary cloudinary;
+//
+//
+//    /**
+//     * Upload Base64 image
+//     */
+//    public String uploadBase64(String base64String, String fileName) {
+//
+//        try {
+//
+//            String cleanBase64 =
+//                    base64String.contains(",")
+//                            ? base64String.split(",")[1]
+//                            : base64String;
+//
+//
+//            byte[] bytes =
+//                    Base64.getDecoder().decode(cleanBase64);
+//
+//            @SuppressWarnings("unchecked")
+//            Map<String, Object> result = cloudinary.uploader()
+//                    .upload(
+//                            bytes,
+//                            ObjectUtils.asMap(
+//                                    "public_id", fileName
+//                            )
+//                    );
+//
+//
+//            return result.get("secure_url").toString();
+//
+//
+//        } catch (IOException e) {
+//            throw new RuntimeException("Upload failed", e);
+//        }
+//    }
+//
+//
+//    /**
+//     * Upload MultipartFile
+//     */
+//    public String uploadFile(MultipartFile file) {
+//
+//        try {
+//
+//            Map result = cloudinary.uploader()
+//                    .upload(
+//                            file.getBytes(),
+//                            ObjectUtils.emptyMap()
+//                    );
+//
+//
+//            return result.get("secure_url").toString();
+//
+//
+//        } catch (IOException e) {
+//            throw new RuntimeException("Upload failed", e);
+//        }
+//    }
+//
+//
+//    /**
+//     * Delete image
+//     */
+//    public void deleteFile(String publicId) {
+//
+//        try {
+//
+//            cloudinary.uploader()
+//                    .destroy(
+//                            publicId,
+//                            ObjectUtils.emptyMap()
+//                    );
+//
+//        } catch (IOException e) {
+//            throw new RuntimeException("Delete failed", e);
+//        }
+//    }
+//}
 
 
 //package com.yaqazah.infrastructure.storage.service;

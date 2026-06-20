@@ -51,7 +51,7 @@ spring:
 
 
 jwt:
-  secret: ${JWT_SECRET:default_secret_key_12345}
+  secret: ${JWT_SECRET:my-32-char-ultra-secret-key-12345}
   expiration: ${JWT_EXPIRATION:86400000}
 
 encryption:

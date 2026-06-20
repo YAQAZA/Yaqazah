@@ -11,11 +11,10 @@ import com.yaqazah.user.model.User;
 import com.yaqazah.user.model.UserStatus;
 import com.yaqazah.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -28,29 +27,29 @@ public class AdminService {
     private final CompanyService companyService;
 
 
-@Transactional
-public void addCompanyAdmin(CompanyAdminDto req, String adminEmail) {
-    if (userRepository.findByEmail(req.getEmail()).isPresent()) {
-        throw new IllegalArgumentException("Email is already taken!");
+    @Transactional
+    public void addCompanyAdmin(CompanyAdminDto req, String adminEmail) {
+        if (userRepository.findByEmail(req.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email is already taken!");
+        }
+
+        User loggedInAdmin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new IllegalStateException("Admin user not found."));
+
+        User newAdmin = new User();
+        newAdmin.setEmail(req.getEmail());
+        newAdmin.setFullName(req.getFullName());
+        newAdmin.setRole(Role.COMPANY_ADMIN);
+
+        // Link admin to the same company as the logged-in Admin
+        newAdmin.setCompany(loggedInAdmin.getCompany());
+        newAdmin.setPasswordHash(passwordEncoder.encode(RandomStringUtils.secure().nextAlphanumeric(8)));
+        newAdmin.setStatus(UserStatus.ACTIVE);
+
+        userRepository.save(newAdmin);
+
+        notificationService.sendWelcomePasswordSetEmail(newAdmin.getEmail());
     }
-
-    User loggedInAdmin = userRepository.findByEmail(adminEmail)
-            .orElseThrow(() -> new IllegalStateException("Admin user not found."));
-
-    User newAdmin = new User();
-    newAdmin.setEmail(req.getEmail());
-    newAdmin.setFullName(req.getFullName());
-    newAdmin.setRole(Role.COMPANY_ADMIN);
-
-    // Link admin to the same company as the logged-in Admin
-    newAdmin.setCompany(loggedInAdmin.getCompany());
-    newAdmin.setPasswordHash(passwordEncoder.encode(req.getPassword()));
-    newAdmin.setStatus(UserStatus.ACTIVE);
-
-    userRepository.save(newAdmin);
-
-    notificationService.sendWelcomePasswordSetEmail(newAdmin.getEmail());
-}
 
     @Transactional
     public void registerCompanyOwner(CompanyOwnerRegistrationDto req) {

@@ -1,5 +1,7 @@
 package com.yaqazah.user.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,12 +12,15 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CompanyOwnerRegistrationDto {
-    // Owner/Admin details
+    @Email(message = "Invalid email format")
+    @NotBlank(message = "Email is required")
     private String adminEmail;
+
+    @NotBlank(message = "Full name is required")
     private String adminFullName;
     private String adminPassword;
 
-    // Company details
+    @NotBlank(message = "Full name is required")
     private String companyName;
     private String companyAddress;
 }

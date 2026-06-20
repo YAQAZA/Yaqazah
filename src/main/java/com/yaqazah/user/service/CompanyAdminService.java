@@ -7,6 +7,7 @@ import com.yaqazah.user.model.User;
 import com.yaqazah.user.model.UserStatus;
 import com.yaqazah.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,7 @@ public class CompanyAdminService {
         newDriver.setRole(Role.FLEET_DRIVER);
         // Link driver to the same company as the Admin
         newDriver.setCompany(loggedInAdmin.getCompany());
-        newDriver.setPasswordHash(passwordEncoder.encode(newDriver.getPasswordHash()));
+        newDriver.setPasswordHash(passwordEncoder.encode(RandomStringUtils.secure().nextAlphanumeric(8)));
         newDriver.setStatus(UserStatus.ACTIVE);
 //        newDriver.setStatus(UserStatus.PENDING_VERIFICATION);
         newDriver.setFullName(newDriver.getFullName() != null ? newDriver.getFullName() : "Unnamed Driver");

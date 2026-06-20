@@ -1,7 +1,9 @@
 spring:
   application:
     name: Yaqazah
-
+  docker:
+    compose:
+      enabled: false
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/yaqazah_db}
     username: ${DB_USERNAME:postgres}
@@ -39,11 +41,14 @@ spring:
 
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
+      host: ${REDIS_HOST}
       port: ${REDIS_PORT:6379}
-
+      password: ${REDIS_PASSWORD}
+      ssl:
+        enabled: ${REDIS_SSL:true}
   cache:
     type: redis
+
 
 jwt:
   secret: ${JWT_SECRET:default_secret_key_12345}
@@ -98,13 +103,8 @@ cloudinary:
 #
 #  data:
 #    redis:
-#      host: neutral-doberman-151329.upstash.io
+#      host: localhost
 #      port: 6379
-#      password: gQAAAAAAAk8hAAIgcDE1ZDBkNzYzOGI4ZGQ0NzBhODlmN2IxMTM1YjhiOTY2Ng
-#      ssl:
-#        enabled: true
-#  cache:
-#    type: redis
 #
 #  cache:
 #    type: redis

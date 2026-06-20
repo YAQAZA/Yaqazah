@@ -5,13 +5,16 @@ import com.yaqazah.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+@NullMarked
 @RestController
 @RequestMapping("/api/users/me")
 @PreAuthorize("isAuthenticated()")
@@ -22,7 +25,14 @@ public class UserController {
     private final UserService userService;
 
     private String getCurrentUserEmail() {
-        return SecurityContextHolder.getContext().getAuthentication().getName();
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        return authentication.getName();
     }
 
     @GetMapping

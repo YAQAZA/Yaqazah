@@ -1,5 +1,6 @@
 package com.yaqazah.user.dto;
 
+import com.yaqazah.user.model.Gender;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -7,7 +8,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -24,4 +24,5 @@ public class CompanyAdminDto {
 
     @NotBlank(message = "Full name is required")
     private String fullName;
+    private Gender gender;
 }

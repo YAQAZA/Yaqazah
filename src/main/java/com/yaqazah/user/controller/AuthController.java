@@ -1,10 +1,12 @@
 package com.yaqazah.user.controller;
 
 import com.yaqazah.user.dto.CompanyOwnerRegistrationDto;
+import com.yaqazah.user.dto.LoginResponseDto;
 import com.yaqazah.user.model.User;
 import com.yaqazah.user.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.http.HttpStatus;
@@ -49,26 +51,67 @@ public class AuthController {
     @Operation(summary = "Verify email with OTP")
     public ResponseEntity<?> verifyEmail(@RequestBody Map<String, String> payload) {
         try {
-            String jwt = authService.verifyEmail(payload.get("email"), payload.get("otp"));
+            LoginResponseDto response = authService.verifyEmail(payload.get("email"), payload.get("otp"));
+
+            // Return a combined payload with the success message and the data
             return ResponseEntity.ok(Map.of(
                     "message", "Email verified successfully!",
-                    "token", jwt
+                    "data", response
             ));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
     @PostMapping("/login")
     @Operation(summary = "User login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> payload) {
+    public ResponseEntity<?> login(
+            @RequestBody Map<String, String> payload,
+            @Nullable
+            @RequestAttribute(value = "isMobile", required = false) Boolean isMobileRequest
+    ) {
         try {
-            String jwt = authService.login(payload.get("email"), payload.get("password"));
-            return ResponseEntity.ok(Map.of("token", jwt));
+            // Default to false (PC) if the interceptor didn't set it
+            boolean isMobile = (isMobileRequest != null) ? isMobileRequest : false;
+
+            LoginResponseDto response = authService.login(payload.get("email"), payload.get("password"), isMobile);
+
+            // Return the token and user data directly
+            return ResponseEntity.ok(response);
+
+        } catch (SecurityException e) {
+            // Returns 403 Forbidden for wrong devices (e.g., Driver on PC)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            // Returns 401 Unauthorized for bad passwords or wrong emails
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid credentials"));
         }
     }
+
+//    @PostMapping("/verify-email")
+//    @Operation(summary = "Verify email with OTP")
+//    public ResponseEntity<?> verifyEmail(@RequestBody Map<String, String> payload) {
+//        try {
+//            String jwt = authService.verifyEmail(payload.get("email"), payload.get("otp"));
+//            return ResponseEntity.ok(Map.of(
+//                    "message", "Email verified successfully!",
+//                    "token", jwt
+//            ));
+//        } catch (IllegalArgumentException e) {
+//            return ResponseEntity.badRequest().body(e.getMessage());
+//        }
+//    }
+//
+//    @PostMapping("/login")
+//    @Operation(summary = "User login")
+//    public ResponseEntity<?> login(@RequestBody Map<String, String> payload) {
+//        try {
+//            String jwt = authService.login(payload.get("email"), payload.get("password"));
+//            return ResponseEntity.ok(Map.of("token", jwt));
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+//        }
+//    }
 
     @PostMapping("/forgot-password")
     @Operation(summary = "Forgot password")

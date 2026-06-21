@@ -4,7 +4,9 @@ import com.yaqazah.common.security.JwtUtil;
 import com.yaqazah.company.model.Company;
 import com.yaqazah.company.service.CompanyService;
 import com.yaqazah.infrastructure.email.NotificationService;
+import com.yaqazah.user.dto.AuthResponseDto;
 import com.yaqazah.user.dto.CompanyOwnerRegistrationDto;
+import com.yaqazah.user.dto.LoginResponseDto;
 import com.yaqazah.user.model.Role;
 import com.yaqazah.user.model.User;
 import com.yaqazah.user.model.UserStatus;
@@ -113,7 +115,7 @@ public class AuthService {
     }
 
     @Transactional
-    public String verifyEmail(String email, String otp) {
+    public LoginResponseDto verifyEmail(String email, String otp) {
         String redisKey = NotificationService.PREFIX_VERIFY + email;
         String storedOtp = redisTemplate.opsForValue().get(redisKey);
 
@@ -128,15 +130,81 @@ public class AuthService {
         userRepository.save(user);
         redisTemplate.delete(redisKey);
 
+        // Generate Token
         UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-        return jwtUtil.generateToken(userDetails);
+        String token = jwtUtil.generateToken(userDetails);
+
+        // Map User to DTO
+        AuthResponseDto userDto = new AuthResponseDto(
+                user.getEmail(),
+                user.getFullName(), // Ensure this matches your User entity getter
+                user.getRole().name()
+        );
+
+        return new LoginResponseDto(token, userDto);
     }
 
-    public String login(String email, String password) {
+    public LoginResponseDto login(String email, String password, boolean isMobile) {
+        // 1. Authenticate credentials
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
+
+        // 2. Fetch User to populate the DTO and check roles
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // ==========================================
+        // 3. THE ENFORCER RULES: Device vs Role
+        // ==========================================
+        boolean isDriver = (user.getRole() == Role.INDEPENDENT_DRIVER || user.getRole() == Role.FLEET_DRIVER);
+        boolean isAdmin = (user.getRole() == Role.ADMIN || user.getRole() == Role.COMPANY_ADMIN);
+
+        if (isDriver && !isMobile) {
+            throw new SecurityException("Drivers must log in using the Mobile App.");
+        }
+
+        if (isAdmin && isMobile) {
+            throw new SecurityException("Administrators must log in using the Web Dashboard.");
+        }
+
+        // 4. Generate Token
         UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-        return jwtUtil.generateToken(userDetails);
+        String token = jwtUtil.generateToken(userDetails);
+
+        // 5. Map User to DTO
+        AuthResponseDto userDto = new AuthResponseDto(
+                user.getEmail(),
+                user.getFullName(),
+                user.getRole().name()
+        );
+
+        return new LoginResponseDto(token, userDto);
     }
+
+//    @Transactional
+//    public String verifyEmail(String email, String otp) {
+//        String redisKey = NotificationService.PREFIX_VERIFY + email;
+//        String storedOtp = redisTemplate.opsForValue().get(redisKey);
+//
+//        if (storedOtp == null || !storedOtp.equals(otp)) {
+//            throw new IllegalArgumentException("Invalid or expired code.");
+//        }
+//
+//        User user = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+//
+//        user.setStatus(UserStatus.ACTIVE);
+//        userRepository.save(user);
+//        redisTemplate.delete(redisKey);
+//
+//        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+//        return jwtUtil.generateToken(userDetails);
+//    }
+//
+//    public String login(String email, String password) {
+//        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
+//        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+//        return jwtUtil.generateToken(userDetails);
+//    }
 
     public void requestPasswordReset(String email) {
         if (userRepository.existsByEmail(email)) {

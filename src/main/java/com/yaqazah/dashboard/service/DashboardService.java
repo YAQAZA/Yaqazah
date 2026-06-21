@@ -315,16 +315,34 @@ public class DashboardService {
         return list;
     }
 
-    private int sessionRiskId(UUID sessionId) {
-        Object[] row = dashboardRepository.sumHighLowForSession(sessionId);
-        if (row == null) {
-            return 0;
-        }
-        long high = row[0] == null ? 0L : ((Number) row[0]).longValue();
-        long low = row[1] == null ? 0L : ((Number) row[1]).longValue();
-        return riskLevel(individualScore(high, low));
+//    private int sessionRiskId(UUID sessionId) {
+//        Object[] row = dashboardRepository.sumHighLowForSession(sessionId);
+//        if (row == null) {
+//            return 0;
+//        }
+//        long high = row[0] == null ? 0L : ((Number) row[0]).longValue();
+//        long low = row[1] == null ? 0L : ((Number) row[1]).longValue();
+//        return riskLevel(individualScore(high, low));
+//    }
+private int sessionRiskId(UUID sessionId) {
+    // 1. Fetch the double-wrapped array from your repository
+    Object[] resultList = dashboardRepository.sumHighLowForSession(sessionId); // (Use your actual repo method name here)
+
+    if (resultList == null || resultList.length == 0) {
+        return 0; // Or whatever your default risk ID is (e.g., 0 or 2)
     }
 
+    // 2. Extract the actual columns from the first index
+    Object[] columns = (Object[]) resultList[0];
+
+    // 3. Safely cast the numbers from the unwrapped columns array
+    long high = columns[0] == null ? 0L : ((Number) columns[0]).longValue();
+    long low = columns[1] == null ? 0L : ((Number) columns[1]).longValue();
+
+    // 4. Calculate and return the risk (adjust to your actual calculation method if different)
+    int score = (int) Math.round(individualScore(high, low));
+    return riskLevel(score);
+}
     private String formatDuration(float durationHours) {
         int totalMinutes = Math.round(durationHours * 60);
         if (totalMinutes <= 0) {

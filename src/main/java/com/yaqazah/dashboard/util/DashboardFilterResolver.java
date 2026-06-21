@@ -13,8 +13,24 @@ public final class DashboardFilterResolver {
     private DashboardFilterResolver() {
     }
 
+    public static String normalizeFilterInput(String filter) {
+        if (filter == null || filter.isBlank()) {
+            throw new IllegalArgumentException("filter is required");
+        }
+        return switch (filter.trim()) {
+            case "0" -> "all";
+            case "1" -> "today";
+            case "2" -> "yesterday";
+            case "3" -> "lastweek";
+            case "4" -> "lastmonth";
+            case "5" -> "lastyear";
+            case "6" -> "custom";
+            default -> normalize(filter);
+        };
+    }
+
     public static String toFilterId(String filter) {
-        return switch (normalize(filter)) {
+        return switch (normalizeFilterInput(filter)) {
             case "all" -> "0";
             case "today" -> "1";
             case "yesterday" -> "2";
@@ -28,7 +44,7 @@ public final class DashboardFilterResolver {
 
     public static DateRange resolve(String filter, String fromIso, String toIso) {
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
-        return switch (normalize(filter)) {
+        return switch (normalizeFilterInput(filter)) {
             case "all" -> new DateRange(LocalDate.of(2000, 1, 1), today);
             case "today" -> new DateRange(today, today);
             case "yesterday" -> {
@@ -64,6 +80,11 @@ public final class DashboardFilterResolver {
         } catch (DateTimeParseException ex) {
             throw new IllegalArgumentException("Invalid ISO 8601 date: " + iso);
         }
+    }
+
+    public static String formatTimeInterval(LocalDate from, LocalDate to) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("d/M/yyyy");
+        return from.format(fmt) + " - " + to.format(fmt);
     }
 
     private static String normalize(String filter) {

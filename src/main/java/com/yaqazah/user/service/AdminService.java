@@ -1,11 +1,12 @@
 package com.yaqazah.user.service;
 
+import com.yaqazah.common.util.PasswordGeneratorUtil;
 import com.yaqazah.company.model.Company;
 import com.yaqazah.company.service.CompanyService;
 import com.yaqazah.infrastructure.email.NotificationService;
 import com.yaqazah.user.dto.CompanyAdminDto;
 import com.yaqazah.user.dto.CompanyOwnerRegistrationDto;
-import com.yaqazah.user.model.Gender;
+import com.yaqazah.user.dto.FleetDriverDto;
 import com.yaqazah.user.model.Role;
 import com.yaqazah.user.model.User;
 import com.yaqazah.user.model.UserStatus;
@@ -22,34 +23,8 @@ public class AdminService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final NotificationService notificationService; // Added this
+    private final NotificationService notificationService;
     private final CompanyService companyService;
-
-
-    @Transactional
-    public void addCompanyAdmin(CompanyAdminDto req, String adminEmail) {
-        if (userRepository.findByEmail(req.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("Email is already taken!");
-        }
-
-        User loggedInAdmin = userRepository.findByEmail(adminEmail)
-                .orElseThrow(() -> new IllegalStateException("Admin user not found."));
-
-        User newCompanyAdmin = new User();
-        newCompanyAdmin.setEmail(req.getEmail());
-        newCompanyAdmin.setFullName(req.getFullName());
-        newCompanyAdmin.setRole(Role.COMPANY_ADMIN);
-
-        // Link admin to the same company as the logged-in Admin
-        newCompanyAdmin.setCompany(loggedInAdmin.getCompany());
-        newCompanyAdmin.setPasswordHash(passwordEncoder.encode(RandomStringUtils.secure().nextAlphanumeric(8)));
-        newCompanyAdmin.setStatus(UserStatus.ACTIVE);
-        newCompanyAdmin.setGender(req.getGender() != null ? req.getGender() : Gender.MALE);
-
-        userRepository.save(newCompanyAdmin);
-
-        notificationService.sendWelcomePasswordSetEmail(newCompanyAdmin.getEmail());
-    }
 
     @Transactional
     public void registerCompanyOwner(CompanyOwnerRegistrationDto req) {
@@ -65,36 +40,70 @@ public class AdminService {
 
         Company savedCompany = companyService.createCompany(newCompany);
 
+        // 3. Map DTO to User
         User newAdmin = new User();
         newAdmin.setEmail(req.getAdminEmail());
         newAdmin.setFullName(req.getAdminFullName());
-        newAdmin.setGender(req.getAdminGender() != null ? req.getAdminGender() : Gender.MALE);
+        newAdmin.setGender(req.getAdminGender()); // Already validated as non-null by DTO
         newAdmin.setRole(Role.COMPANY_ADMIN);
-        newAdmin.setCompany(savedCompany); // Link the saved company here!
+        newAdmin.setCompany(savedCompany);
         newAdmin.setPasswordHash(passwordEncoder.encode(req.getAdminPassword()));
         newAdmin.setStatus(UserStatus.ACTIVE);
 
-        // 4. Save to DB and send email
+        // 4. Save to DB
         userRepository.save(newAdmin);
     }
-//    @Transactional
-//    public void addCompanyAdmin(UUID companyId, User newAdmin) {
-//        if (userRepository.findByEmail(newAdmin.getEmail()).isPresent()) {
-//            throw new IllegalArgumentException("Email is already taken!");
-//        }
-//
-//        Company company = companyRepository.findById(companyId)
-//                .orElseThrow(() -> new IllegalArgumentException("Company not found."));
-//
-//        newAdmin.setRole(Role.COMPANY_ADMIN);
-//        newAdmin.setCompany(company);
-//        newAdmin.setPasswordHash(passwordEncoder.encode(newAdmin.getPasswordHash()));
-//        newAdmin.setStatus(UserStatus.ACTIVE);
-//
-////        newAdmin.setStatus(UserStatus.PENDING_VERIFICATION);
-//
-//        userRepository.save(newAdmin);
-//
-//        notificationService.sendWelcomePasswordSetEmail(newAdmin.getEmail());
-//    }
+
+    @Transactional
+    public void addCompanyAdmin(CompanyAdminDto req, String adminEmail) {
+        if (userRepository.findByEmail(req.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email is already taken!");
+        }
+
+        User loggedInAdmin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new IllegalStateException("Admin user not found."));
+
+        // Map DTO to User
+        User newCompanyAdmin = new User();
+        newCompanyAdmin.setEmail(req.getEmail());
+        newCompanyAdmin.setFullName(req.getFullName());
+        newCompanyAdmin.setGender(req.getGender());
+        newCompanyAdmin.setRole(Role.COMPANY_ADMIN);
+        newCompanyAdmin.setCompany(loggedInAdmin.getCompany()); // Link to same company
+
+        // Auto-generate password
+        String rawTempPassword = PasswordGeneratorUtil.generateCompliantPassword();
+        newCompanyAdmin.setPasswordHash(passwordEncoder.encode(rawTempPassword));
+
+        newCompanyAdmin.setStatus(UserStatus.ACTIVE);
+
+        userRepository.save(newCompanyAdmin);
+        notificationService.sendWelcomePasswordSetEmail(newCompanyAdmin.getEmail());
+    }
+
+    @Transactional
+    public void addFleetDriver(FleetDriverDto req, String adminEmail) {
+        if (userRepository.findByEmail(req.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email is already taken!");
+        }
+
+        User loggedInAdmin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new IllegalStateException("Admin user not found."));
+
+        // Map DTO to User
+        User newDriver = new User();
+        newDriver.setEmail(req.getEmail());
+        newDriver.setFullName(req.getFullName());
+        newDriver.setGender(req.getGender());
+        newDriver.setRole(Role.FLEET_DRIVER);
+        newDriver.setCompany(loggedInAdmin.getCompany());
+
+        String rawTempPassword = PasswordGeneratorUtil.generateCompliantPassword();
+        newDriver.setPasswordHash(passwordEncoder.encode(rawTempPassword));
+
+        newDriver.setStatus(UserStatus.ACTIVE);
+
+        userRepository.save(newDriver);
+        notificationService.sendWelcomePasswordSetEmail(newDriver.getEmail());
+    }
 }

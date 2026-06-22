@@ -27,6 +27,7 @@ public class User {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String passwordHash;
 //    @Convert(converter = EncryptionConverter.class)
+
     @Column(nullable = false)
     private String fullName;
 

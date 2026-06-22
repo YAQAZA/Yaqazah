@@ -1,9 +1,11 @@
 package com.yaqazah.user.controller;
 
-import com.yaqazah.user.model.User;
+import com.yaqazah.user.dto.FleetDriverDto;
+import com.yaqazah.user.dto.UpdateFleetDriverDto;
 import com.yaqazah.user.service.CompanyAdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.http.HttpStatus;
@@ -32,7 +34,8 @@ public class CompanyAdminController {
 
     @PostMapping("/add")
     @Operation(summary = "Add a new Fleet Driver", description = "Creates a new driver account linked to the logged-in admin's company.")
-    public ResponseEntity<String> addFleetDriver(@RequestBody User newDriver) {
+    // FIX: Changed User to FleetDriverDto and added @Valid
+    public ResponseEntity<String> addFleetDriver(@Valid @RequestBody FleetDriverDto newDriver) {
         try {
             companyAdminService.addFleetDriver(newDriver, getCurrentAdminEmail());
             return ResponseEntity.ok("Fleet Driver added successfully to your company!");
@@ -45,9 +48,10 @@ public class CompanyAdminController {
 
     @PutMapping("/edit/{driverId}")
     @Operation(summary = "Edit a Fleet Driver", description = "Updates details of an existing driver. Restricted to drivers within the admin's company.")
+    // FIX: Changed User to UpdateFleetDriverDto and added @Valid
     public ResponseEntity<String> editFleetDriver(
             @PathVariable UUID driverId,
-            @RequestBody User updatedDriverData) {
+            @Valid @RequestBody UpdateFleetDriverDto updatedDriverData) {
         try {
             companyAdminService.updateFleetDriver(driverId, updatedDriverData, getCurrentAdminEmail());
             return ResponseEntity.ok("Fleet Driver updated successfully!");

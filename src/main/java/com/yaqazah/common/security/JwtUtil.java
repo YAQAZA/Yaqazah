@@ -58,7 +58,8 @@ public class JwtUtil {
         return extractExpiration(token).before(new Date());
     }
 
-    public String generateToken(UserDetails userDetails) {
+    // 1. Update generateToken to accept the 'client' string
+    public String generateToken(UserDetails userDetails, String client) {
 
         List<String> roles = userDetails.getAuthorities()
                 .stream()
@@ -67,11 +68,18 @@ public class JwtUtil {
 
         return Jwts.builder()
                 .claim("roles", roles)
+                .claim("client", client) // <-- ADD THIS CLAIM
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(secretKey)
                 .compact();
+    }
+
+    // 2. Add this new method to read the client claim
+    public String extractClient(String token) {
+        Claims claims = extractAllClaims(token);
+        return claims.get("client", String.class);
     }
 
     public List<String> extractRoles(String token) {

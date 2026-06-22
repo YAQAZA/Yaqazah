@@ -34,7 +34,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String email = null;
         String jwt = null;
 
-        // 1. Check if the Authorization header contains a Bearer token
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             jwt = authorizationHeader.substring(7);
             try {
@@ -44,41 +43,52 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        // 2. If we have an email and the user isn't already authenticated in this context
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            // Extract roles directly from the token (No database hit required!)
             List<String> roles = jwtUtil.extractRoles(jwt);
-
-            // Null-safety check: Prevents crashes if the token is completely missing the roles claim
             if (roles == null) {
                 roles = java.util.Collections.emptyList();
             }
 
-            // Normalize roles: Spring's hasRole() strictly requires the "ROLE_" prefix.
-            // This ensures it exists regardless of how it was saved in the database.
             List<SimpleGrantedAuthority> authorities = roles.stream()
                     .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
                     .map(SimpleGrantedAuthority::new)
                     .collect(Collectors.toList());
 
-            // Create a lightweight UserDetails object using the data from the token
             UserDetails userDetails = new org.springframework.security.core.userdetails.User(
                     email, "", authorities);
 
-            // 3. Validate the token and set the security context
+            // 3. Validate token and enforce client boundaries!
             if (jwtUtil.validateToken(jwt, userDetails)) {
+
+                String client = jwtUtil.extractClient(jwt);
+                String requestURI = request.getRequestURI();
+
+                // Check if a Mobile token is trying to hit a Web route
+                if (requestURI.startsWith("/api/web/") && !"web".equals(client)) {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\": \"Access Denied: Web token required.\"}");
+                    return; // Stop processing and kick them out
+                }
+
+                // Check if a Web token is trying to hit a Mobile route
+                if (requestURI.startsWith("/api/mobile/") && !"mobile".equals(client)) {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\": \"Access Denied: Mobile token required.\"}");
+                    return; // Stop processing and kick them out
+                }
+
+                // If they passed the checks, log them in!
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, authorities);
 
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                // This tells Spring Security: "This user is fully authenticated and has these roles."
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
 
-        // 4. Continue the filter chain
         filterChain.doFilter(request, response);
     }
 }

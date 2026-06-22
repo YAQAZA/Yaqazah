@@ -1,7 +1,6 @@
 package com.yaqazah.user.dto;
 
 import com.yaqazah.user.model.Gender;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -15,13 +14,10 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CompanyOwnerRegistrationDto {
-    @Email(message = "Invalid email format")
-    @NotBlank(message = "Email is required")
-    private String adminEmail;
+public class UserRegistrationDto {
 
-    @NotBlank(message = "Full name is required")
-    private String adminFullName;
+    @NotBlank(message = "Email cannot be empty")
+    private String email;
 
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password must be at least 8 characters long")
@@ -29,12 +25,11 @@ public class CompanyOwnerRegistrationDto {
             regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$",
             message = "Password must contain at least one number, one lowercase, and one uppercase letter"
     )
-    private String adminPassword;
+    private String password;
 
-    @NotNull(message = "Gender is required")
-    private Gender adminGender;
+    @NotBlank(message = "Name must be specified")
+    private String fullName;
 
-    @NotBlank(message = "Company name is required")
-    private String companyName;
-    private String companyAddress;
+    @NotNull(message = "Gender must be specified")
+    private Gender gender;
 }

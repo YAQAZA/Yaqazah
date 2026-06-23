@@ -1,5 +1,6 @@
 package com.yaqazah.user.service;
 
+import com.yaqazah.user.dto.UserProfileResponseDto;
 import com.yaqazah.user.model.Role;
 import com.yaqazah.user.model.User;
 import com.yaqazah.user.repository.UserRepository;
@@ -29,6 +30,24 @@ public class UserService {
         User user = findByEmail(email);
         user.setFullName(newName);
         userRepository.save(user);
+    }
+
+    public UserProfileResponseDto getUserProfileDto(String email) {
+        // 1. Fetch the raw entity using your existing method
+        User user = findByEmail(email);
+
+        // 2. Map the entity to the DTO
+        UserProfileResponseDto response = new UserProfileResponseDto();
+        response.setEmail(user.getEmail());
+        response.setFullName(user.getFullName());
+
+        if (user.getGender() != null) {
+            response.setGender(user.getGender().name());
+        }
+        response.setRole(user.getRole().name());
+
+        // 3. Return the safe DTO
+        return response;
     }
 
     @Transactional

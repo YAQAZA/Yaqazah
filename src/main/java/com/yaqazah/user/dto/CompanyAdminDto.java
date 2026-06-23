@@ -3,18 +3,15 @@ package com.yaqazah.user.dto;
 import com.yaqazah.user.model.Gender;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import jakarta.validation.constraints.NotNull;
 
 
 
-@Getter
-@Setter
-@AllArgsConstructor
+@Data
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CompanyAdminDto {
     @Email(message = "Invalid email format")
     @NotBlank(message = "Email is required")

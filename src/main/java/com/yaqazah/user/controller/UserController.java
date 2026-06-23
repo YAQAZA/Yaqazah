@@ -1,5 +1,6 @@
 package com.yaqazah.user.controller;
 
+import com.yaqazah.user.dto.UserProfileResponseDto;
 import com.yaqazah.user.model.User;
 import com.yaqazah.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,10 +38,16 @@ public class UserController {
 
     @GetMapping
     @Operation(summary = "Get My Profile", description = "Fetches the profile details of the currently authenticated user.")
-    public ResponseEntity<User> getMyProfile() {
+    public ResponseEntity<UserProfileResponseDto> getMyProfile() {
+
+        // 1. Get the current user's email from the security context
         String email = getCurrentUserEmail();
-        User user = userService.findByEmail(email);
-        return ResponseEntity.ok(user);
+
+        // 2. Ask the service layer for the pre-mapped DTO
+        UserProfileResponseDto response = userService.getUserProfileDto(email);
+
+        // 3. Return the response
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/update-name")

@@ -4,10 +4,7 @@ import com.yaqazah.common.security.JwtUtil;
 import com.yaqazah.company.model.Company;
 import com.yaqazah.company.service.CompanyService;
 import com.yaqazah.infrastructure.email.NotificationService;
-import com.yaqazah.user.dto.AuthResponseDto;
-import com.yaqazah.user.dto.CompanyOwnerRegistrationDto;
-import com.yaqazah.user.dto.LoginResponseDto;
-import com.yaqazah.user.dto.UserRegistrationDto;
+import com.yaqazah.user.dto.*;
 import com.yaqazah.user.model.RefreshToken;
 import com.yaqazah.user.model.Role;
 import com.yaqazah.user.model.User;
@@ -23,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.MessageDigest;
 import java.util.Optional;
 
 @Service
@@ -115,30 +113,38 @@ public class AuthService {
     }
 
     @Transactional
-    public LoginResponseDto verifyEmail(String email, String otp, String client) {
-        String redisKey = NotificationService.PREFIX_VERIFY + email;
+    public LoginResponseDto verifyEmail(VerifyEmailDto req) {
+        String redisKey = NotificationService.PREFIX_VERIFY + req.getEmail();
         String storedOtp = redisTemplate.opsForValue().get(redisKey);
 
-        if (storedOtp == null || !storedOtp.equals(otp)) {
+        // 1. Check if OTP exists
+        if (storedOtp == null) {
             throw new IllegalArgumentException("Invalid or expired code.");
         }
 
-        User user = userRepository.findByEmail(email)
+        // 2. Secure constant-time equality check to prevent timing attacks
+        if (!MessageDigest.isEqual(storedOtp.getBytes(), req.getOtp().getBytes())) {
+            throw new IllegalArgumentException("Invalid or expired code.");
+        }
+
+        // 3. Delete the OTP immediately to prevent reuse
+        redisTemplate.delete(redisKey);
+
+        User user = userRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
-        redisTemplate.delete(redisKey);
 
         // Generate Access Token
-        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-        String token = jwtUtil.generateToken(userDetails, client);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(req.getEmail());
+        String token = jwtUtil.generateToken(userDetails, req.getClient());
 
         // Clear existing refresh token to prevent duplicates
-        refreshTokenService.deleteByUserId(email);
+        refreshTokenService.deleteByUserId(req.getEmail());
 
         // Generate Refresh Token
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(email);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(req.getEmail());
 
         AuthResponseDto userDto = new AuthResponseDto(
                 user.getEmail(),
@@ -146,22 +152,21 @@ public class AuthService {
                 user.getRole().name()
         );
 
-        // Return both tokens
         return new LoginResponseDto(token, refreshToken.getToken(), userDto);
     }
 
     @Transactional
-    public LoginResponseDto login(String email, String password, String client) {
+    public LoginResponseDto login(LoginRequestDto req) {
 
         // 1. Authenticate credentials
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword()));
 
         // 2. Fetch User to check roles
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         // 3. Determine if this request is coming from a mobile app
-        boolean isMobile = "mobile".equalsIgnoreCase(client);
+        boolean isMobile = "mobile".equalsIgnoreCase(req.getClient());
 
         // 4. THE ENFORCER RULES: Device vs Role
         boolean isDriver = (user.getRole() == Role.INDEPENDENT_DRIVER || user.getRole() == Role.FLEET_DRIVER);
@@ -176,14 +181,14 @@ public class AuthService {
         }
 
         // 5. Generate Short-lived Access Token
-        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-        String token = jwtUtil.generateToken(userDetails, client);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(req.getEmail());
+        String token = jwtUtil.generateToken(userDetails, req.getClient());
 
-        // --- THE FIX: Clear existing refresh token before creating a new one ---
-        refreshTokenService.deleteByUserId(email);
+        // Clear existing refresh token before creating a new one
+        refreshTokenService.deleteByUserId(req.getEmail());
 
         // 6. Generate Long-lived Refresh Token
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(email);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(req.getEmail());
 
         AuthResponseDto userDto = new AuthResponseDto(
                 user.getEmail(),
@@ -191,31 +196,39 @@ public class AuthService {
                 user.getRole().name()
         );
 
-        // 7. Return both tokens
         return new LoginResponseDto(token, refreshToken.getToken(), userDto);
     }
 
-    public void requestPasswordReset(String email) {
-        if (userRepository.existsByEmail(email)) {
-            notificationService.sendPasswordResetOtp(email);
+    public void requestPasswordReset(ForgotPasswordDto req) {
+        if (userRepository.existsByEmail(req.getEmail())) {
+            notificationService.sendPasswordResetOtp(req.getEmail());
         }
     }
 
     @Transactional
-    public void resetPassword(String email, String otp, String newPassword) {
-        String redisKey = NotificationService.PREFIX_RESET + email;
+    public void resetPassword(ResetPasswordDto req) {
+
+        String redisKey = NotificationService.PREFIX_RESET + req.getEmail();
         String storedOtp = redisTemplate.opsForValue().get(redisKey);
 
-        if (storedOtp == null || !storedOtp.equals(otp)) {
+        // 1. Check if OTP exists in Redis
+        if (storedOtp == null) {
             throw new IllegalArgumentException("Invalid or expired reset code.");
         }
 
-        User user = userRepository.findByEmail(email)
+        // 2. Secure constant-time equality check to prevent timing attacks
+        if (!MessageDigest.isEqual(storedOtp.getBytes(), req.getOtp().getBytes())) {
+            throw new IllegalArgumentException("Invalid or expired reset code.");
+        }
+
+        // 3. Delete immediately
+        redisTemplate.delete(redisKey);
+
+        User user = userRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
         userRepository.save(user);
-        redisTemplate.delete(redisKey);
     }
 
     @Transactional
@@ -224,7 +237,6 @@ public class AuthService {
                 .map(refreshTokenService::verifyExpiration)
                 .map(RefreshToken::getUser)
                 .map(user -> {
-                    // Generate and return the new Access Token
                     UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
                     return jwtUtil.generateToken(userDetails, client);
                 })

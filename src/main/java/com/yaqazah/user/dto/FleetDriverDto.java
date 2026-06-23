@@ -1,11 +1,10 @@
 package com.yaqazah.user.dto;
 
 import com.yaqazah.user.model.Gender;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.*;
 import lombok.*;
+
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -23,4 +22,12 @@ public class FleetDriverDto {
 
     @NotNull(message = "Gender is required")
     private Gender gender;
+
+    @Past
+    private LocalDate birthDate;
+    @AssertTrue(message = "Must be at least 18")
+    public boolean isAdult() {
+        return birthDate != null &&
+                birthDate.plusYears(18).isBefore(LocalDate.now());
+    }
 }

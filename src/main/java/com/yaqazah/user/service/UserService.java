@@ -40,13 +40,10 @@ public class UserService {
         UserProfileResponseDto response = new UserProfileResponseDto();
         response.setEmail(user.getEmail());
         response.setFullName(user.getFullName());
-
-        if (user.getGender() != null) {
-            response.setGender(user.getGender().name());
-        }
+        response.setGender(user.getGender().name());
         response.setRole(user.getRole().name());
+        response.setBirthDate(user.getBirthDate());
 
-        // 3. Return the safe DTO
         return response;
     }
 

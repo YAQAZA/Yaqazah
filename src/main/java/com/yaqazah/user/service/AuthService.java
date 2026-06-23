@@ -149,7 +149,8 @@ public class AuthService {
         AuthResponseDto userDto = new AuthResponseDto(
                 user.getEmail(),
                 user.getFullName(),
-                user.getRole().name()
+                user.getRole().name(),
+                user.getBirthDate()
         );
 
         return new LoginResponseDto(token, refreshToken.getToken(), userDto);
@@ -193,7 +194,8 @@ public class AuthService {
         AuthResponseDto userDto = new AuthResponseDto(
                 user.getEmail(),
                 user.getFullName(),
-                user.getRole().name()
+                user.getRole().name(),
+                user.getBirthDate()
         );
 
         return new LoginResponseDto(token, refreshToken.getToken(), userDto);

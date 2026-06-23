@@ -41,6 +41,7 @@ public class CompanyAdminService {
         newDriver.setGender(req.getGender());
         newDriver.setRole(Role.FLEET_DRIVER);
         newDriver.setCompany(loggedInAdmin.getCompany());
+        newDriver.setBirthDate(req.getBirthDate());
 
         String rawTempPassword = PasswordGeneratorUtil.generateCompliantPassword();
         newDriver.setPasswordHash(passwordEncoder.encode(rawTempPassword));

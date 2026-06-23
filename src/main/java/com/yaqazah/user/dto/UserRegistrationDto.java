@@ -4,6 +4,8 @@ import com.yaqazah.user.model.Gender;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,4 +30,12 @@ public class UserRegistrationDto {
 
     @NotNull(message = "Gender must be specified")
     private Gender gender;
+
+    @Past
+    private LocalDate birthDate;
+    @AssertTrue(message = "Must be at least 18")
+    public boolean isAdult() {
+        return birthDate != null &&
+                birthDate.plusYears(18).isBefore(LocalDate.now());
+    }
 }

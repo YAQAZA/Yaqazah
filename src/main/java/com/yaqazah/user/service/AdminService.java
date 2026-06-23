@@ -49,6 +49,7 @@ public class AdminService {
         newAdmin.setCompany(savedCompany);
         newAdmin.setPasswordHash(passwordEncoder.encode(req.getAdminPassword()));
         newAdmin.setStatus(UserStatus.ACTIVE);
+        newAdmin.setBirthDate(req.getBirthDate());
 
         // 4. Save to DB
         userRepository.save(newAdmin);
@@ -70,6 +71,7 @@ public class AdminService {
         newCompanyAdmin.setGender(req.getGender());
         newCompanyAdmin.setRole(Role.COMPANY_ADMIN);
         newCompanyAdmin.setCompany(loggedInAdmin.getCompany()); // Link to same company
+        newCompanyAdmin.setBirthDate(req.getBirthDate());
 
         // Auto-generate password
         String rawTempPassword = PasswordGeneratorUtil.generateCompliantPassword();
@@ -97,6 +99,7 @@ public class AdminService {
         newDriver.setGender(req.getGender());
         newDriver.setRole(Role.FLEET_DRIVER);
         newDriver.setCompany(loggedInAdmin.getCompany());
+        newDriver.setBirthDate(req.getBirthDate());
 
         String rawTempPassword = PasswordGeneratorUtil.generateCompliantPassword();
         newDriver.setPasswordHash(passwordEncoder.encode(rawTempPassword));

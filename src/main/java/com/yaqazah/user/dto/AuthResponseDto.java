@@ -1,6 +1,10 @@
 package com.yaqazah.user.dto;
 
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Past;
 import lombok.*;
+
+import java.time.LocalDate;
 
 
 @Data
@@ -11,4 +15,11 @@ public class AuthResponseDto {
     private String email;
     private String fullName;
     private String role;
+    @Past
+    private LocalDate birthDate;
+    @AssertTrue(message = "Must be at least 18")
+    public boolean isAdult() {
+        return birthDate != null &&
+                birthDate.plusYears(18).isBefore(LocalDate.now());
+    }
 }

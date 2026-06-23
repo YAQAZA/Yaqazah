@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.util.UUID;
 import java.time.Instant;
 import org.hibernate.annotations.CreationTimestamp;
@@ -49,4 +50,6 @@ public class User {
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant insertedAt;
+
+    private LocalDate birthDate;
 }

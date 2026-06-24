@@ -40,7 +40,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     List<User> findByIsDeletedTrueAndDeletedAtBefore(Instant cutoffDate);
 
     int countByCompany_CompanyIdAndRoleIn(UUID companyId, List<Role> roles);
-    
+
     @Query("SELECT new com.yaqazah.report.dto.DriverSessionReportDto(" +
             "u.userId, u.fullName, s.sessionId, s.startTime, s.endTime, s.durationHours, s.totalAlerts, " +
             "d.eventId, d.timestamp, cast(d.type as string), d.severity, d.valueDetected) " +

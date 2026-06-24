@@ -81,7 +81,7 @@ public class UserService {
             case ADMIN:
                 long totalAdmins = userRepository.countByRole(Role.ADMIN);
 
-                // Promote the oldest company admin so the system isn't left without an Admin
+                // Promote the oldest company admin if there is one
                 if (totalAdmins <= 1) {
                     Optional<User> oldestCompanyAdminOpt = userRepository
                             .findFirstByRoleOrderByInsertedAtAsc(Role.COMPANY_ADMIN);
@@ -90,15 +90,14 @@ public class UserService {
                         User oldestCompanyAdmin = oldestCompanyAdminOpt.get();
                         oldestCompanyAdmin.setRole(Role.ADMIN);
                         userRepository.save(oldestCompanyAdmin);
-                    } else {
-                        // THE FAILSAFE: No admins and no company admins left.
-                        throw new IllegalStateException("Critical System Error: You are the last administrative user in the platform. You cannot delete your account.");
                     }
+                    // No error thrown here anymore! If no one is left, it just continues
+                    // and deletes them and their company.
                 }
+
                 // INTENTIONAL FALL-THROUGH:
-                // Do NOT put a "break;" here! Because an ADMIN is also a company owner,
-                // we want the code to fall directly into the COMPANY_ADMIN block below
-                // to soft-delete their company and drivers!
+                // Because an ADMIN is also a company owner, we let the code drop directly
+                // into the COMPANY_ADMIN logic below to soft-delete their company and drivers!
 
             case COMPANY_ADMIN:
                 Company company = user.getCompany();

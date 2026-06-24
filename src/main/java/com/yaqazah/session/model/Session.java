@@ -21,8 +21,9 @@ public class Session {
     private UUID sessionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;    private String startTime;
+    @JoinColumn(name = "userId", nullable = false)
+    private User user;
+    private String startTime;
     private String endTime;
     private float durationHours;
     private int totalAlerts;

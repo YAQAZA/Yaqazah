@@ -16,7 +16,7 @@ public interface AdminAnalyticsRepository extends JpaRepository<DetectionLog, UU
     @Query("""
             select s.sessionId, u.fullName, u.userId, s.startTime, s.endTime, s.durationHours, s.totalAlerts
             from Session s
-            join User u on s.userId = u.userId
+            join User u on s.user.userId = u.userId
             where u.company.companyId = :companyId
               and u.role = :driverRole
               and s.startTime >= :startIso
@@ -44,7 +44,7 @@ public interface AdminAnalyticsRepository extends JpaRepository<DetectionLog, UU
 @Query("""
         select s.sessionId, u.fullName, u.userId, s.startTime, s.endTime, s.durationHours, s.totalAlerts
         from Session s
-        join User u on s.userId = u.userId
+        join User u on s.user.userId = u.userId
         where s.sessionId = :sessionId
           and u.company.companyId = :companyId
           and u.role = :driverRole
@@ -95,14 +95,14 @@ Optional<Object> findSessionForCompany( // <-- Changed to Optional<Object>
     @Query("""
             select count(s)
             from Session s
-            where s.userId = :driverId
+            where s.user.userId = :driverId
             """)
     long countSessionsForDriver(@Param("driverId") UUID driverId);
 
     @Query("""
             select s.startTime
             from Session s
-            where s.userId = :driverId
+            where s.user.userId = :driverId
             order by s.startTime desc
             """)
     List<String> findLastSessionStartTime(@Param("driverId") UUID driverId, Pageable pageable);
@@ -110,7 +110,7 @@ Optional<Object> findSessionForCompany( // <-- Changed to Optional<Object>
     @Query("""
             select s.sessionId, s.startTime, s.durationHours, s.totalAlerts
             from Session s
-            where s.userId = :driverId
+            where s.user.userId = :driverId
             order by s.startTime desc
             """)
     List<Object[]> findSessionsForDriver(@Param("driverId") UUID driverId);
@@ -118,7 +118,7 @@ Optional<Object> findSessionForCompany( // <-- Changed to Optional<Object>
     @Query("""
             select s.sessionId, s.startTime, s.durationHours, s.totalAlerts
             from Session s
-            where s.userId = :driverId
+            where s.user.userId = :driverId
               and s.startTime >= :startIso
               and s.startTime < :endIsoExclusive
             order by s.startTime desc
@@ -131,7 +131,7 @@ Optional<Object> findSessionForCompany( // <-- Changed to Optional<Object>
     @Query("""
             select coalesce(sum(s.durationHours), 0)
             from Session s
-            join User u on s.userId = u.userId
+            join User u on s.user.userId = u.userId
             where u.company.companyId = :companyId
               and u.role = :driverRole
               and s.startTime >= :startIso
@@ -146,7 +146,7 @@ Optional<Object> findSessionForCompany( // <-- Changed to Optional<Object>
     @Query("""
             select coalesce(sum(s.durationHours), 0)
             from Session s
-            where s.userId = :driverId
+            where s.user.userId = :driverId
               and s.startTime >= :startIso
               and s.startTime < :endIsoExclusive
             """)
@@ -173,7 +173,7 @@ Optional<Object> findSessionForCompany( // <-- Changed to Optional<Object>
             where u.company.companyId = :companyId
               and d.timestamp >= :startIso
               and d.timestamp < :endIsoExclusive
-              and s.userId = u.userId
+              and s.user.userId = u.userId
             group by u.userId
             """)
     List<Object[]> sumHighLowByDriver(
@@ -182,9 +182,9 @@ Optional<Object> findSessionForCompany( // <-- Changed to Optional<Object>
             @Param("endIsoExclusive") String endIsoExclusive);
 
     @Query("""
-            select count(distinct s.userId)
+            select count(distinct s.user.userId)
             from Session s
-            join User u on s.userId = u.userId
+            join User u on s.user.userId = u.userId
             where u.company.companyId = :companyId
               and u.role = :driverRole
               and s.startTime >= :startIso
@@ -199,7 +199,7 @@ Optional<Object> findSessionForCompany( // <-- Changed to Optional<Object>
     @Query("""
             select count(s)
             from Session s
-            join User u on s.userId = u.userId
+            join User u on s.user.userId = u.userId
             where u.company.companyId = :companyId
               and u.role = :driverRole
               and s.startTime >= :startIso
@@ -219,7 +219,7 @@ Optional<Object> findSessionForCompany( // <-- Changed to Optional<Object>
             where u.company.companyId = :companyId
               and d.timestamp >= :startIso
               and d.timestamp < :endIsoExclusive
-              and s.userId = u.userId
+              and s.user.userId = u.userId
             """)
     long countTotalAlerts(
             @Param("companyId") UUID companyId,
@@ -230,7 +230,7 @@ Optional<Object> findSessionForCompany( // <-- Changed to Optional<Object>
             select count(d)
             from DetectionLog d
             join d.session s
-            where s.userId = :driverId
+            where s.user.userId = :driverId
               and d.timestamp >= :startIso
               and d.timestamp < :endIsoExclusive
             """)
@@ -243,7 +243,7 @@ Optional<Object> findSessionForCompany( // <-- Changed to Optional<Object>
             select substring(d.timestamp, 1, 10), d.type, count(d)
             from DetectionLog d
             join d.session s
-            where s.userId = :driverId
+            where s.user.userId = :driverId
               and d.timestamp >= :startIso
               and d.timestamp < :endIsoExclusive
             group by substring(d.timestamp, 1, 10), d.type
@@ -257,7 +257,7 @@ Optional<Object> findSessionForCompany( // <-- Changed to Optional<Object>
             select d.type, count(d)
             from DetectionLog d
             join d.session s
-            where s.userId = :driverId
+            where s.user.userId = :driverId
               and d.timestamp >= :startIso
               and d.timestamp < :endIsoExclusive
             group by d.type

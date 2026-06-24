@@ -109,4 +109,34 @@ public class AdminService {
         userRepository.save(newDriver);
         notificationService.sendWelcomePasswordSetEmail(newDriver.getEmail());
     }
+
+    @Transactional
+    public void swapOwnership(String currentAdminEmail, String targetEmail) {
+
+        User currentAdmin = userRepository.findByEmail(currentAdminEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Current admin not found."));
+
+        User targetUser = userRepository.findByEmail(targetEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Target user not found."));
+
+        // Validations
+        if (currentAdmin.getRole() != Role.ADMIN) {
+            throw new IllegalStateException("Only the current ADMIN can transfer ownership.");
+        }
+        if (targetUser.getRole() != Role.COMPANY_ADMIN) {
+            throw new IllegalStateException("Ownership can only be transferred to a COMPANY_ADMIN.");
+        }
+        if (currentAdmin.getCompany() == null || targetUser.getCompany() == null ||
+                !currentAdmin.getCompany().getCompanyId().equals(targetUser.getCompany().getCompanyId())) {
+            throw new IllegalStateException("Both users must belong to the same company to swap roles.");
+        }
+
+        // Perform the Swap
+        currentAdmin.setRole(Role.COMPANY_ADMIN);
+        targetUser.setRole(Role.ADMIN);
+
+        // Save the changes
+        userRepository.save(currentAdmin);
+        userRepository.save(targetUser);
+    }
 }

@@ -33,7 +33,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     List<User> findByCompany_CompanyIdAndRole(UUID companyId, Role role);
 
     void deleteByCompany_CompanyIdAndRole(UUID companyId, Role role);
-
+    boolean existsByCompany_CompanyIdAndRoleAndIsDeletedFalse(UUID companyId, Role role);
     boolean existsByEmail(String email);
 
     // Add this inside UserRepository
@@ -45,7 +45,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             "u.userId, u.fullName, s.sessionId, s.startTime, s.endTime, s.durationHours, s.totalAlerts, " +
             "d.eventId, d.timestamp, cast(d.type as string), d.severity, d.valueDetected) " +
             "FROM User u " +
-            "LEFT JOIN Session s ON u.userId = s.userId " +
+            "LEFT JOIN Session s ON u.userId = s.user.userId " +
             "LEFT JOIN DetectionLog d ON s.sessionId = d.session.sessionId " +
             "WHERE u.company.companyId = :companyId AND u.role = 'DRIVER'")
         // The compiler expects clarity on the type inside the list

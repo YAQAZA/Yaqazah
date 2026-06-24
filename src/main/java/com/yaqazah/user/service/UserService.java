@@ -91,13 +91,9 @@ public class UserService {
                         oldestCompanyAdmin.setRole(Role.ADMIN);
                         userRepository.save(oldestCompanyAdmin);
                     }
-                    // No error thrown here anymore! If no one is left, it just continues
-                    // and deletes them and their company.
                 }
-
-                // INTENTIONAL FALL-THROUGH:
-                // Because an ADMIN is also a company owner, we let the code drop directly
-                // into the COMPANY_ADMIN logic below to soft-delete their company and drivers!
+                // INTENTIONAL FALL-THROUGH: Drop directly into COMPANY_ADMIN logic
+                // to soft-delete their company and drivers!
 
             case COMPANY_ADMIN:
                 Company company = user.getCompany();
@@ -192,7 +188,7 @@ public class UserService {
     }
 
     // ========================================================================
-    // 3. RESTORE ACCOUNT (Easy Peasy: Email & Password)
+    // 3. RESTORE ACCOUNT (First-Come, First-Serve Admin Assignment)
     // ========================================================================
     @Transactional
     public void restoreAccount(String email, String password) {
@@ -205,31 +201,48 @@ public class UserService {
             throw new IllegalStateException("Account is already active.");
         }
 
-        // 3. Check the password (PROVES they own the account)
+        // 3. Check the password
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
             throw new SecurityException("Invalid credentials.");
         }
 
-        // 4. Restore the user
+        // 4. Restore the user's base properties
         user.setDeleted(false);
         user.setDeletedAt(null);
 
-        // 5. If they happen to be an Admin OR a Company Admin, restore their Company and Drivers too
+        // 5. Handle Company Leaders (Admin & Company Admin)
         if (user.getRole() == Role.COMPANY_ADMIN || user.getRole() == Role.ADMIN) {
             Company company = user.getCompany();
 
-            if (company != null && company.isDeleted()) {
-                // Restore the company itself
-                company.setDeleted(false);
-                company.setDeletedAt(null);
-                companyRepository.save(company);
+            if (company != null) {
+                // Restore the company and drivers if the company was deleted
+                if (company.isDeleted()) {
+                    company.setDeleted(false);
+                    company.setDeletedAt(null);
+                    companyRepository.save(company);
 
-                // Restore all fleet drivers belonging to this company
-                List<User> fleetDrivers = userRepository.findByCompany_CompanyIdAndRole(company.getCompanyId(), Role.FLEET_DRIVER);
-                for (User driver : fleetDrivers) {
-                    driver.setDeleted(false);
-                    driver.setDeletedAt(null);
-                    userRepository.save(driver);
+                    List<User> fleetDrivers = userRepository.findByCompany_CompanyIdAndRole(
+                            company.getCompanyId(), Role.FLEET_DRIVER);
+
+                    for (User driver : fleetDrivers) {
+                        driver.setDeleted(false);
+                        driver.setDeletedAt(null);
+                        userRepository.save(driver);
+                    }
+                }
+
+                // --- DYNAMIC ROLE ASSIGNMENT ---
+                // Check if the company currently has an active ADMIN
+                boolean activeAdminExists = userRepository.existsByCompany_CompanyIdAndRoleAndIsDeletedFalse(
+                        company.getCompanyId(), Role.ADMIN
+                );
+
+                if (!activeAdminExists) {
+                    // No active ADMIN exists -> The first leader back gets the crown
+                    user.setRole(Role.ADMIN);
+                } else {
+                    // An active ADMIN already exists -> Anyone else comes back as a COMPANY_ADMIN
+                    user.setRole(Role.COMPANY_ADMIN);
                 }
             }
         }

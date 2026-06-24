@@ -52,7 +52,7 @@ public class User {
     private Instant insertedAt;
 
     private LocalDate birthDate;
-
+    @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean isDeleted = false;
     private Instant deletedAt = null;
 }

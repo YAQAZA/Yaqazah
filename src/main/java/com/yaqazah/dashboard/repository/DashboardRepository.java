@@ -38,7 +38,7 @@ public interface DashboardRepository extends JpaRepository<DetectionLog, UUID> {
             where u.company.companyId = :companyId
               and d.timestamp >= :startIso
               and d.timestamp < :endIsoExclusive
-              and s.userId = u.userId
+              and s.user.userId = u.userId
             """)
     long countTotalAlerts(
             @Param("companyId") UUID companyId,
@@ -48,7 +48,7 @@ public interface DashboardRepository extends JpaRepository<DetectionLog, UUID> {
     @Query("""
             select count(s)
             from Session s
-            join User u on s.userId = u.userId
+            join User u on s.user.userId = u.userId
             where u.company.companyId = :companyId
               and u.role = :driverRole
               and s.startTime >= :startIso
@@ -61,14 +61,14 @@ public interface DashboardRepository extends JpaRepository<DetectionLog, UUID> {
             @Param("endIsoExclusive") String endIsoExclusive);
 
     @Query("""
-            select s.userId, count(s)
+            select s.user.userId, count(s)
             from Session s
-            join User u on s.userId = u.userId
+            join User u on s.user.userId = u.userId
             where u.company.companyId = :companyId
               and u.role = :driverRole
               and s.startTime >= :startIso
               and s.startTime < :endIsoExclusive
-            group by s.userId
+            group by s.user.userId
             """)
     List<Object[]> countSessionsByDriver(
             @Param("companyId") UUID companyId,
@@ -85,9 +85,9 @@ public interface DashboardRepository extends JpaRepository<DetectionLog, UUID> {
     Object[] sumHighLowForSession(@Param("sessionId") UUID sessionId);
 
     @Query("""
-            select distinct s.userId
+            select distinct s.user.userId
             from Session s
-            join User u on s.userId = u.userId
+            join User u on s.user.userId = u.userId
             where u.company.companyId = :companyId
               and u.role = :driverRole
               and s.startTime >= :startIso
@@ -125,7 +125,7 @@ public interface DashboardRepository extends JpaRepository<DetectionLog, UUID> {
             where u.company.companyId = :companyId
               and d.timestamp >= :trendStartIso
               and d.timestamp < :endIsoExclusive
-              and s.userId = u.userId
+              and s.user.userId = u.userId
             group by substring(d.timestamp, 1, 10), d.type
             """)
     List<Object[]> countAlertsByDayAndType(
@@ -141,7 +141,7 @@ public interface DashboardRepository extends JpaRepository<DetectionLog, UUID> {
             where u.company.companyId = :companyId
               and d.timestamp >= :startIso
               and d.timestamp < :endIsoExclusive
-              and s.userId = u.userId
+              and s.user.userId = u.userId
             group by d.type
             """)
     List<Object[]> countAlertsByType(
@@ -152,7 +152,7 @@ public interface DashboardRepository extends JpaRepository<DetectionLog, UUID> {
     @Query("""
             select s.sessionId, u.fullName, s.durationHours, s.totalAlerts
             from Session s
-            join User u on s.userId = u.userId
+            join User u on s.user.userId = u.userId
             where u.company.companyId = :companyId
               and u.role = :driverRole
             order by s.startTime desc
@@ -184,9 +184,9 @@ public interface DashboardRepository extends JpaRepository<DetectionLog, UUID> {
 
     // 2. Count distinct active drivers in a specific time period
     @Query("""
-            select count(distinct s.userId)
+            select count(distinct s.user.userId)
             from Session s
-            join User u on s.userId = u.userId
+            join User u on s.user.userId = u.userId
             where u.company.companyId = :companyId
               and u.role = :role
               and s.startTime >= :startIso
@@ -204,7 +204,7 @@ public interface DashboardRepository extends JpaRepository<DetectionLog, UUID> {
                    coalesce(sum(case when upper(d.severity) = 'HIGH' then 1 else 0 end), 0),
                    coalesce(sum(case when upper(d.severity) = 'LOW' then 1 else 0 end), 0)
             from User u
-            left join Session s on u.userId = s.userId 
+            left join Session s on u.userId = s.user.userId 
                 and s.startTime >= :startIso and s.startTime < :endIso
             left join DetectionLog d on s.sessionId = d.session.sessionId
             where u.company.companyId = :companyId
@@ -219,7 +219,7 @@ public interface DashboardRepository extends JpaRepository<DetectionLog, UUID> {
     @Query("""
             select s.sessionId, s.startTime, s.durationHours, s.totalAlerts
             from Session s
-            where s.userId = :driverId
+            where s.user.userId = :driverId
             order by s.startTime desc
             """)
     List<Object[]> findSessionsForDriver(@Param("driverId") UUID driverId);
@@ -228,7 +228,7 @@ public interface DashboardRepository extends JpaRepository<DetectionLog, UUID> {
     @Query("""
             select s.startTime 
             from Session s 
-            where s.userId = :driverId 
+            where s.user.userId = :driverId 
             order by s.startTime desc
             """)
     List<String> findLastSessionStartTime(

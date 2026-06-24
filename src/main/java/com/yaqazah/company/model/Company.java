@@ -22,6 +22,7 @@ public class Company {
     private String name;
     private String address;
     private String createdAt;
+    @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean isDeleted = false;
     private Instant deletedAt = null;
 }

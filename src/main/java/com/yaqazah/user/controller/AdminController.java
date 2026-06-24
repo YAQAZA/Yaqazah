@@ -84,4 +84,15 @@ public class AdminController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PutMapping("/restore")
+    @Operation(summary = "Restore Deleted Account", description = "Restores a soft-deleted user (and their company/drivers if applicable) before the 30-day hard delete.")
+    public ResponseEntity<String> restoreUserAccount(@PathVariable UUID userId) {
+        try {
+            adminService.restoreAccount(userId);
+            return ResponseEntity.ok("Account successfully restored.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

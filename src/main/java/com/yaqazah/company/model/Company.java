@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Setter
@@ -21,4 +22,6 @@ public class Company {
     private String name;
     private String address;
     private String createdAt;
+    private boolean isDeleted = false;
+    private Instant deletedAt = null;
 }

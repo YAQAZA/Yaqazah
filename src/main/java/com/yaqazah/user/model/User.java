@@ -52,4 +52,7 @@ public class User {
     private Instant insertedAt;
 
     private LocalDate birthDate;
+
+    private boolean isDeleted = false;
+    private Instant deletedAt = null;
 }

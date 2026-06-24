@@ -1,5 +1,6 @@
 package com.yaqazah.session.model;
 
+import com.yaqazah.user.model.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,8 +20,9 @@ public class Session {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID sessionId;
 
-    private UUID userId;
-    private String startTime;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;    private String startTime;
     private String endTime;
     private float durationHours;
     private int totalAlerts;

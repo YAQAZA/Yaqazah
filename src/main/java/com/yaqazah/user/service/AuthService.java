@@ -13,6 +13,7 @@ import com.yaqazah.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -159,17 +160,24 @@ public class AuthService {
     @Transactional
     public LoginResponseDto login(LoginRequestDto req) {
 
-        // 1. Authenticate credentials
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword()));
-
-        // 2. Fetch User to check roles
+        // 1. Fetch User first to check existence and status
         User user = userRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // 3. Determine if this request is coming from a mobile app
+        // 2. Block deleted accounts BEFORE spending CPU cycles on password hashing
+        if (user.isDeleted()) {
+            throw new DisabledException("Account is scheduled for deletion. Please contact support.");
+        }
+
+        // 3. Authenticate credentials
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword())
+        );
+
+        // 4. Determine if this request is coming from a mobile app
         boolean isMobile = "mobile".equalsIgnoreCase(req.getClient());
 
-        // 4. THE ENFORCER RULES: Device vs Role
+        // 5. THE ENFORCER RULES: Device vs Role
         boolean isDriver = (user.getRole() == Role.INDEPENDENT_DRIVER || user.getRole() == Role.FLEET_DRIVER);
         boolean isAdmin = (user.getRole() == Role.ADMIN || user.getRole() == Role.COMPANY_ADMIN);
 
@@ -181,14 +189,14 @@ public class AuthService {
             throw new SecurityException("Administrators must log in using the Web Dashboard.");
         }
 
-        // 5. Generate Short-lived Access Token
+        // 6. Generate Short-lived Access Token
         UserDetails userDetails = userDetailsService.loadUserByUsername(req.getEmail());
         String token = jwtUtil.generateToken(userDetails, req.getClient());
 
         // Clear existing refresh token before creating a new one
         refreshTokenService.deleteByUserId(req.getEmail());
 
-        // 6. Generate Long-lived Refresh Token
+        // 7. Generate Long-lived Refresh Token
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(req.getEmail());
 
         AuthResponseDto userDto = new AuthResponseDto(

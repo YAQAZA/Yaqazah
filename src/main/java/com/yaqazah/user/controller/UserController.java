@@ -1,5 +1,6 @@
 package com.yaqazah.user.controller;
 
+import com.yaqazah.user.dto.LoginRequestDto;
 import com.yaqazah.user.dto.UserProfileResponseDto;
 import com.yaqazah.user.model.User;
 import com.yaqazah.user.service.UserService;
@@ -72,6 +73,17 @@ public class UserController {
             userService.deleteAccount(currentUser.getUserId());
             return ResponseEntity.ok("Your account has been deleted successfully.");
         } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/restore")
+    @Operation(summary = "Restore Account", description = "Public endpoint to restore a deleted account using email and password.")
+    public ResponseEntity<String> restoreAccount(@RequestBody LoginRequestDto request) {
+        try {
+            userService.restoreAccount(request.getEmail(), request.getPassword());
+            return ResponseEntity.ok("Account successfully restored.");
+        } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

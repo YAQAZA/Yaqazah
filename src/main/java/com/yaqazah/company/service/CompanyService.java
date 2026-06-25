@@ -9,6 +9,7 @@ import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,38 +28,38 @@ public class CompanyService {
             throw new IllegalArgumentException("A company with this name already exists.");
         }
 
-        if (company.getCreatedAt() == null || company.getCreatedAt().isEmpty()) {
-            company.setCreatedAt(LocalDateTime.now().toString());
+        if (company.getInsertedAt() == null) {
+            company.setInsertedAt(Instant.now());
         }
 
         return companyRepository.save(company);
     }
 
-    public Optional<Company> getCompanyById(UUID companyId, String userEmail) {
-        User loggedInUser = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalStateException("User not found."));
+//    public Optional<Company> getCompanyById(UUID companyId, String userEmail) {
+//        User loggedInUser = userRepository.findByEmail(userEmail)
+//                .orElseThrow(() -> new IllegalStateException("User not found."));
+//
+//        // BOTH Admin and Company Admin must pass this check
+//        if (loggedInUser.getCompany() == null || !loggedInUser.getCompany().getCompanyId().equals(companyId)) {
+//            throw new IllegalStateException("Access Denied: You are not assigned to this company.");
+//        }
+//
+//        return companyRepository.findById(companyId);
+//    }
 
-        // BOTH Admin and Company Admin must pass this check
-        if (loggedInUser.getCompany() == null || !loggedInUser.getCompany().getCompanyId().equals(companyId)) {
-            throw new IllegalStateException("Access Denied: You are not assigned to this company.");
-        }
-
-        return companyRepository.findById(companyId);
-    }
-
-    @Transactional
-    public void deleteCompany(UUID companyId, String userEmail) {
-        User loggedInUser = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalStateException("User not found."));
-
-        //Admin must pass this check
-        if (loggedInUser.getCompany() == null || !loggedInUser.getCompany().getCompanyId().equals(companyId)) {
-            throw new IllegalStateException("Access Denied: You can only delete your own company.");
-        }
-
-        if (!companyRepository.existsById(companyId)) {
-            throw new IllegalArgumentException("Company not found.");
-        }
-        companyRepository.deleteById(companyId);
-    }
+//    @Transactional
+//    public void deleteCompany(UUID companyId, String userEmail) {
+//        User loggedInUser = userRepository.findByEmail(userEmail)
+//                .orElseThrow(() -> new IllegalStateException("User not found."));
+//
+//        //Admin must pass this check
+//        if (loggedInUser.getCompany() == null || !loggedInUser.getCompany().getCompanyId().equals(companyId)) {
+//            throw new IllegalStateException("Access Denied: You can only delete your own company.");
+//        }
+//
+//        if (!companyRepository.existsById(companyId)) {
+//            throw new IllegalArgumentException("Company not found.");
+//        }
+//        companyRepository.deleteById(companyId);
+//    }
 }

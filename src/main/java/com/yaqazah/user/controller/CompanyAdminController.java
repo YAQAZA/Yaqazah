@@ -1,7 +1,7 @@
 package com.yaqazah.user.controller;
 
-import com.yaqazah.user.dto.FleetDriverDto;
-import com.yaqazah.user.dto.UpdateFleetDriverDto;
+import com.yaqazah.user.dto.request.FleetDriverDto;
+import com.yaqazah.user.dto.request.UpdateFleetDriverDto;
 import com.yaqazah.user.service.CompanyAdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

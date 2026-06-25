@@ -1,4 +1,4 @@
-package com.yaqazah.user.dto;
+package com.yaqazah.user.dto.response;
 
 import lombok.*;
 

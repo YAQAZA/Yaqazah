@@ -1,4 +1,4 @@
-package com.yaqazah.user.dto;
+package com.yaqazah.user.dto.request;
 
 import com.yaqazah.user.model.Gender;
 import com.yaqazah.user.model.UserStatus;

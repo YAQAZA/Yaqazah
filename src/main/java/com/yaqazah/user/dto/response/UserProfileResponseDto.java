@@ -1,4 +1,4 @@
-package com.yaqazah.user.dto;
+package com.yaqazah.user.dto.response;
 
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Past;
@@ -6,14 +6,14 @@ import lombok.*;
 
 import java.time.LocalDate;
 
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AuthResponseDto {
+public class UserProfileResponseDto {
     private String email;
     private String fullName;
+    private String gender;
     private String role;
     @Past
     private LocalDate birthDate;

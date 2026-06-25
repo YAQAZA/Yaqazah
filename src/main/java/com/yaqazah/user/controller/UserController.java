@@ -1,8 +1,10 @@
 package com.yaqazah.user.controller;
 
-import com.yaqazah.user.dto.LoginRequestDto;
-import com.yaqazah.user.dto.UserProfileResponseDto;
+import com.yaqazah.user.dto.response.CompanyInfoDto;
+import com.yaqazah.user.dto.request.LoginRequestDto;
+import com.yaqazah.user.dto.response.UserProfileResponseDto;
 import com.yaqazah.user.model.User;
+import com.yaqazah.user.dto.response.AdminListDto;
 import com.yaqazah.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -14,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @NullMarked
@@ -85,6 +88,38 @@ public class UserController {
             return ResponseEntity.ok("Account successfully restored.");
         } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    @GetMapping("/company-admins")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COMPANY_ADMIN')")
+    @Operation(summary = "Get All Company Admins", description = "Fetches a list of all admins and company admins belonging to the requester's company.")
+    public ResponseEntity<List<AdminListDto>> getCompanyAdmins() {
+        try {
+            String email = getCurrentUserEmail();
+            List<AdminListDto> response = userService.getCompanyAdmins(email);
+
+            return ResponseEntity.ok(response);
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            // Note: In a real app, you might want a global exception handler,
+            // but returning badRequest matches your current controller style.
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/company-info")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COMPANY_ADMIN', 'FLEET_DRIVER')") // Note: Use hasAnyRole if your DB uses the "ROLE_" prefix
+    @Operation(summary = "Get Company Overview", description = "Fetches the company details along with the primary owner's info and total admin count.")
+    public ResponseEntity<CompanyInfoDto> getCompanyInfo() {
+        try {
+            // Securely extract the email from the logged-in user's token
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+            // Fetch the mapped DTO from the service
+            CompanyInfoDto response = userService.getCompanyInfo(email);
+
+            return ResponseEntity.ok(response);
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
         }
     }
 }

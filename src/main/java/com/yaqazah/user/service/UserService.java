@@ -4,12 +4,13 @@ import com.yaqazah.company.model.Company;
 import com.yaqazah.company.repository.CompanyRepository;
 import com.yaqazah.detection.repository.DetectionLogRepository;
 import com.yaqazah.session.repository.SessionRepository;
-import com.yaqazah.user.dto.UserProfileResponseDto;
+import com.yaqazah.user.dto.response.AdminListDto;
+import com.yaqazah.user.dto.response.CompanyInfoDto;
+import com.yaqazah.user.dto.response.UserProfileResponseDto;
 import com.yaqazah.user.model.Role;
 import com.yaqazah.user.model.User;
 import com.yaqazah.user.repository.RefreshTokenRepository;
 import com.yaqazah.user.repository.UserRepository;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -248,5 +249,72 @@ public class UserService {
         }
 
         userRepository.save(user);
+    }
+
+    // ========================================================================
+    // GET COMPANY ADMINS
+    // ========================================================================
+    public List<AdminListDto> getCompanyAdmins(String requesterEmail) {
+        User requester = findByEmail(requesterEmail);
+
+        if (requester.getCompany() == null) {
+            throw new IllegalStateException("User is not associated with any company.");
+        }
+
+        // Fetch users in the same company who are either ADMIN or COMPANY_ADMIN
+        List<User> admins = userRepository.findByCompany_CompanyIdAndRoleIn(
+                requester.getCompany().getCompanyId(),
+                List.of(Role.ADMIN, Role.COMPANY_ADMIN)
+        );
+
+        return admins.stream()
+                .map(user -> AdminListDto.builder()
+                        .name(user.getFullName())
+                        .email(user.getEmail())
+                        // Note: If your User entity uses a different field name for the creation date
+                        // (like getCreatedAt() or getJoinedAt()), update getInsertedAt() below to match.
+                        .insertedAt(user.getInsertedAt())
+                        .role(user.getRole().name())
+                        .build())
+                .toList();
+    }
+
+    // ========================================================================
+    // GET COMPANY INFO
+    // ========================================================================
+    public CompanyInfoDto getCompanyInfo(String requesterEmail) {
+        // 1. Get the logged-in user and their company
+        User requester = findByEmail(requesterEmail);
+        Company company = requester.getCompany();
+
+        if (company == null) {
+            throw new IllegalStateException("User is not associated with any company.");
+        }
+
+        UUID companyId = company.getCompanyId();
+
+        // 2. Count the total number of admins (ADMIN + COMPANY_ADMIN)
+        int totalAdmins = userRepository.countByCompany_CompanyIdAndRoleIn(
+                companyId,
+                List.of(Role.ADMIN, Role.COMPANY_ADMIN)
+        );
+
+        // 3. Find the single primary ADMIN for this company
+        User primaryAdmin = userRepository.findByCompany_CompanyIdAndRole(companyId, Role.ADMIN)
+                .stream()
+                .findFirst() // Grabs the first item from the List (returns an Optional)
+                .orElseThrow(() -> new IllegalStateException("Company has no primary ADMIN (Owner)."));
+
+        // 4. Map everything to the DTO
+        return CompanyInfoDto.builder()
+                .companyName(company.getName())
+                .companyAddress(company.getAddress())
+                .totalAdmins(totalAdmins)
+                // Note: If your Company entity uses getCreatedAt(), change this to match
+                .companyInsertedAt(company.getInsertedAt())
+
+                .adminName(primaryAdmin.getFullName())
+                .adminEmail(primaryAdmin.getEmail())
+                .build();
     }
 }

@@ -2,8 +2,8 @@ package com.yaqazah.user.service;
 
 import com.yaqazah.common.util.PasswordGeneratorUtil;
 import com.yaqazah.infrastructure.email.NotificationService;
-import com.yaqazah.user.dto.FleetDriverDto;
-import com.yaqazah.user.dto.UpdateFleetDriverDto;
+import com.yaqazah.user.dto.request.FleetDriverDto;
+import com.yaqazah.user.dto.request.UpdateFleetDriverDto;
 import com.yaqazah.user.model.Role;
 import com.yaqazah.user.model.User;
 import com.yaqazah.user.model.UserStatus;

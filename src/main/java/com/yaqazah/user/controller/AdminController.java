@@ -1,9 +1,6 @@
 package com.yaqazah.user.controller;
 
-import com.yaqazah.user.dto.CompanyAdminDto;
-import com.yaqazah.user.dto.CompanyOwnerRegistrationDto;
-import com.yaqazah.user.dto.FleetDriverDto;
-import com.yaqazah.user.dto.SwapOwnershipDto;
+import com.yaqazah.user.dto.request.*;
 import com.yaqazah.user.service.AdminService;
 import com.yaqazah.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -99,6 +96,21 @@ public class AdminController {
             adminService.swapOwnership(currentAdminEmail, request.getTargetEmail());
 
             return ResponseEntity.ok("Ownership successfully transferred. You have been downgraded to COMPANY_ADMIN.");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // Replace the previous @DeleteMapping inside com.yaqazah.user.controller.AdminController
+
+    @DeleteMapping
+    @Operation(summary = "Delete User", description = "Allows a Super Admin to forcefully delete any user account using a JSON request body.")
+    public ResponseEntity<String> deleteUser(@Valid @RequestBody DeleteUserRequestDto request) {
+        try {
+            // Pass the email from the JSON payload to the service
+            adminService.deleteUserByEmail(request.getEmail());
+
+            return ResponseEntity.ok("User deleted successfully.");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

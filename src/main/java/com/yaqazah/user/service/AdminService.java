@@ -4,15 +4,14 @@ import com.yaqazah.common.util.PasswordGeneratorUtil;
 import com.yaqazah.company.model.Company;
 import com.yaqazah.company.service.CompanyService;
 import com.yaqazah.infrastructure.email.NotificationService;
-import com.yaqazah.user.dto.CompanyAdminDto;
-import com.yaqazah.user.dto.CompanyOwnerRegistrationDto;
-import com.yaqazah.user.dto.FleetDriverDto;
+import com.yaqazah.user.dto.request.CompanyAdminDto;
+import com.yaqazah.user.dto.request.CompanyOwnerRegistrationDto;
+import com.yaqazah.user.dto.request.FleetDriverDto;
 import com.yaqazah.user.model.Role;
 import com.yaqazah.user.model.User;
 import com.yaqazah.user.model.UserStatus;
 import com.yaqazah.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +24,7 @@ public class AdminService {
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
     private final CompanyService companyService;
+    private final UserService userService;
 
     @Transactional
     public void registerCompanyOwner(CompanyOwnerRegistrationDto req) {
@@ -138,5 +138,15 @@ public class AdminService {
         // Save the changes
         userRepository.save(currentAdmin);
         userRepository.save(targetUser);
+    }
+
+    // Add this inside com.yaqazah.user.service.UserService
+
+    @Transactional
+    public void deleteUserByEmail(String email) {
+        User targetUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
+
+        userService.deleteAccount(targetUser.getUserId());
     }
 }

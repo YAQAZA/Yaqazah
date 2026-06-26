@@ -196,7 +196,7 @@ public class DashboardService {
 
         Map<String, Map<Integer, Long>> byDayAndType = new HashMap<>();
         for (Object[] row : rows) {
-            String dayKey = (String) row[0];
+            String dayKey = row[0].toString();
             DetectionType t = (DetectionType) row[1];
             Integer typeId = AlertTypeMapper.toTypeId(t);
             if (typeId == null || !AlertTypeMapper.isTrendType(typeId)) {

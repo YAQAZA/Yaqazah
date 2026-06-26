@@ -8,6 +8,6 @@ import java.util.UUID;
 
 public interface DetectionLogRepository extends JpaRepository<DetectionLog, UUID> {
     List<DetectionLog> findBySession_SessionId(UUID sessionSessionId);
-    List<DetectionLog> findByTimestampStartingWith(String date);
+    List<DetectionLog> findByTimestampBetween(java.time.Instant start, java.time.Instant end);
     void deleteByUser(User user);
 }

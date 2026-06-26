@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Setter
@@ -23,8 +24,10 @@ public class Session {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userId", nullable = false)
     private User user;
-    private String startTime;
-    private String endTime;
+    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+    private Instant startTime;
+    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+    private Instant  endTime;
     private float durationHours;
     private int totalAlerts;
 

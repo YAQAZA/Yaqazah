@@ -193,8 +193,8 @@ public class UserService {
     // ========================================================================
     @Transactional
     public void restoreAccount(String email, String password) {
-        // 1. Find the user by email
-        User user = userRepository.findByEmail(email)
+        // 1. Find the user by email including deleted ones
+        User user = userRepository.findByEmailIncludingDeleted(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
 
         // 2. Make sure they are actually deleted

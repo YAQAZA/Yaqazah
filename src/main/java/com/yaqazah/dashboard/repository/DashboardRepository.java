@@ -118,7 +118,7 @@ public interface DashboardRepository extends JpaRepository<DetectionLog, UUID> {
 //            @Param("endIsoExclusive") String endIsoExclusive);
 
     @Query("""
-            select substring(d.timestamp, 1, 10), d.type, count(d)
+            select cast(d.timestamp as date), d.type, count(d)
             from DetectionLog d
             join d.session s
             join d.user u
@@ -126,7 +126,7 @@ public interface DashboardRepository extends JpaRepository<DetectionLog, UUID> {
               and d.timestamp >= :trendStartIso
               and d.timestamp < :endIsoExclusive
               and s.user.userId = u.userId
-            group by substring(d.timestamp, 1, 10), d.type
+            group by cast(d.timestamp as date), d.type
             """)
     List<Object[]> countAlertsByDayAndType(
             @Param("companyId") UUID companyId,

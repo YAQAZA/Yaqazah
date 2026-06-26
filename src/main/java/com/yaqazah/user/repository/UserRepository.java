@@ -21,6 +21,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     // The <User> here is now considered non-null
     Optional<User> findByEmail(String email);
 
+    @Query(value = "SELECT * FROM users WHERE email = :email", nativeQuery = true)
+    Optional<User> findByEmailIncludingDeleted(@Param("email") String email);
+
     // Checks if they are the last Admin in the whole system
     long countByRole(Role role);
 
@@ -43,13 +46,13 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     List<User> findByCompany_CompanyIdAndRoleIn(UUID companyId, List<Role> roles);
 
 
-    @Query("SELECT new com.yaqazah.report.dto.DriverSessionReportDto(" +
-            "u.userId, u.fullName, s.sessionId, s.startTime, s.endTime, s.durationHours, s.totalAlerts, " +
-            "d.eventId, d.timestamp, cast(d.type as string), d.severity, d.valueDetected) " +
-            "FROM User u " +
-            "LEFT JOIN Session s ON u.userId = s.user.userId " +
-            "LEFT JOIN DetectionLog d ON s.sessionId = d.session.sessionId " +
-            "WHERE u.company.companyId = :companyId AND u.role = 'DRIVER'")
-        // The compiler expects clarity on the type inside the list
-    List<DriverSessionReportDto> findCombinedDriverDataByCompany(@Param("companyId") UUID companyId);
+//    @Query("SELECT new com.yaqazah.report.dto.DriverSessionReportDto(" +
+//            "u.userId, u.fullName, s.sessionId, s.startTime, s.endTime, s.durationHours, s.totalAlerts, " +
+//            "d.eventId, d.timestamp, cast(d.type as string), d.severity, d.valueDetected) " +
+//            "FROM User u " +
+//            "LEFT JOIN Session s ON u.userId = s.user.userId " +
+//            "LEFT JOIN DetectionLog d ON s.sessionId = d.session.sessionId " +
+//            "WHERE u.company.companyId = :companyId AND u.role = 'DRIVER'")
+//        // The compiler expects clarity on the type inside the list
+//    List<DriverSessionReportDto> findCombinedDriverDataByCompany(@Param("companyId") UUID companyId);
 }

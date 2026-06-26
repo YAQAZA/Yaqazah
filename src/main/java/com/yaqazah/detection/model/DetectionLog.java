@@ -22,7 +22,7 @@ public class DetectionLog {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    private String timestamp;
+    private java.time.Instant timestamp;
 
     @Enumerated(EnumType.STRING)
     private DetectionType type;

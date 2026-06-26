@@ -10,12 +10,15 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.hibernate.annotations.SQLRestriction;
+
 @Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "company")
+@SQLRestriction("is_deleted = false")
 public class Company {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

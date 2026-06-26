@@ -153,7 +153,7 @@ public DriversListResponseDto buildDriversList(UUID companyId, String filter, St
         List<SessionSummaryDto> sessions = new ArrayList<>();
         for (Object[] row : sessionsInPeriod) {
             UUID sid = (UUID) row[0];
-            String startTime = (String) row[1];
+            String startTime = row[1] != null ? row[1].toString() : null;
             float hours = row[2] == null ? 0f : ((Number) row[2]).floatValue();
             int alerts = row[3] == null ? 0 : ((Number) row[3]).intValue();
             int score = sessionSafetyScore(sid);
@@ -265,7 +265,7 @@ public DriversListResponseDto buildDriversList(UUID companyId, String filter, St
         List<Object[]> rows = repository.countAlertsByDayAndTypeForDriver(driverId, trendStartIso, endIsoExclusive);
         Map<String, Map<Integer, Long>> byDayAndType = new HashMap<>();
         for (Object[] row : rows) {
-            String dayKey = (String) row[0];
+            String dayKey = row[0].toString();
             DetectionType t = (DetectionType) row[1];
             Integer typeId = AlertTypeMapper.toTypeId(t);
             if (typeId == null || !AlertTypeMapper.isTrendType(typeId)) {

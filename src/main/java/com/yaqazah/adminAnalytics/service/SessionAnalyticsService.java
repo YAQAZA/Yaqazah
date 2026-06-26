@@ -77,8 +77,8 @@ public class SessionAnalyticsService {
         UUID sid = (UUID) row[0];
         String driverName = (String) row[1];
         UUID driverId = (UUID) row[2];
-        String startTime = (String) row[3];
-        String endTime = (String) row[4];
+        String startTime = row[3] != null ? row[3].toString() : null;
+        String endTime = row[4] != null ? row[4].toString() : null;
         float hours = row[5] == null ? 0f : ((Number) row[5]).floatValue();
         int alerts = row[6] == null ? 0 : ((Number) row[6]).intValue();
 
@@ -275,8 +275,7 @@ public class SessionAnalyticsService {
         UUID sessionId = (UUID) row[0];
         String driverName = (String) row[1];
         UUID driverId = (UUID) row[2];
-        String startTime = (String) row[3];
-
+        String startTime = row[3] != null ? row[3].toString() : null;
         // 2. Safely cast numeric fields to prevent ClassCastException
         float hours = row[5] == null ? 0f : ((Number) row[5]).floatValue();
         int alerts = row[6] == null ? 0 : ((Number) row[6]).intValue();

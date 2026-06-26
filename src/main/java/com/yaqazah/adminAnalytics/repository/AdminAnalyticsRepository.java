@@ -240,13 +240,13 @@ Optional<Object> findSessionForCompany( // <-- Changed to Optional<Object>
             @Param("endIsoExclusive") String endIsoExclusive);
 
     @Query("""
-            select substring(d.timestamp, 1, 10), d.type, count(d)
+            select cast(d.timestamp as date), d.type, count(d)
             from DetectionLog d
             join d.session s
             where s.user.userId = :driverId
               and d.timestamp >= :startIso
               and d.timestamp < :endIsoExclusive
-            group by substring(d.timestamp, 1, 10), d.type
+            group by cast(d.timestamp as date), d.type
             """)
     List<Object[]> countAlertsByDayAndTypeForDriver(
             @Param("driverId") UUID driverId,

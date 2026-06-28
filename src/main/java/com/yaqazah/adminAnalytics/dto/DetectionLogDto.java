@@ -1,9 +1,13 @@
 package com.yaqazah.adminAnalytics.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class DetectionLogDto {
     private String eventId;

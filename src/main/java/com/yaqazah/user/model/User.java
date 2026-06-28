@@ -8,9 +8,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.util.UUID;
 import java.time.Instant;
 import org.hibernate.annotations.CreationTimestamp;
+
+import org.hibernate.annotations.SQLRestriction;
 
 @Setter
 @Getter
@@ -18,6 +21,7 @@ import org.hibernate.annotations.CreationTimestamp;
 @AllArgsConstructor
 @Entity
 @Table(name = "users")
+@SQLRestriction("is_deleted = false")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -27,6 +31,7 @@ public class User {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String passwordHash;
 //    @Convert(converter = EncryptionConverter.class)
+
     @Column(nullable = false)
     private String fullName;
 
@@ -48,4 +53,9 @@ public class User {
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant insertedAt;
+
+    private LocalDate birthDate;
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean isDeleted = false;
+    private Instant deletedAt = null;
 }

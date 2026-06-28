@@ -25,8 +25,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
-        // Logic: Only ACTIVE users are enabled
-        boolean isEnabled = user.getStatus() == UserStatus.ACTIVE;
+        // Logic: Only ACTIVE users are enabled AND they must not be deleted
+        boolean isEnabled = user.getStatus() == UserStatus.ACTIVE && !user.isDeleted();
 
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),

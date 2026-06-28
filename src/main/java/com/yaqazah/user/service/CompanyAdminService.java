@@ -1,13 +1,14 @@
 package com.yaqazah.user.service;
 
+import com.yaqazah.common.util.PasswordGeneratorUtil;
 import com.yaqazah.infrastructure.email.NotificationService;
-import com.yaqazah.user.model.Gender;
+import com.yaqazah.user.dto.request.FleetDriverDto;
+import com.yaqazah.user.dto.request.UpdateFleetDriverDto;
 import com.yaqazah.user.model.Role;
 import com.yaqazah.user.model.User;
 import com.yaqazah.user.model.UserStatus;
 import com.yaqazah.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,56 +26,65 @@ public class CompanyAdminService {
     private final NotificationService notificationService;
 
     @Transactional
-    public void addFleetDriver(User newDriver, String adminEmail) {
-        if (userRepository.findByEmail(newDriver.getEmail()).isPresent()) {
+    public void addFleetDriver(FleetDriverDto req, String adminEmail) {
+        if (userRepository.findByEmail(req.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email is already taken!");
         }
 
         User loggedInAdmin = userRepository.findByEmail(adminEmail)
                 .orElseThrow(() -> new IllegalStateException("Admin user not found."));
 
-        // Set business rules
+        // Map DTO to User
+        User newDriver = new User();
+        newDriver.setEmail(req.getEmail());
+        newDriver.setFullName(req.getFullName());
+        newDriver.setGender(req.getGender());
         newDriver.setRole(Role.FLEET_DRIVER);
-        // Link driver to the same company as the Admin
         newDriver.setCompany(loggedInAdmin.getCompany());
-        newDriver.setPasswordHash(passwordEncoder.encode(RandomStringUtils.secure().nextAlphanumeric(8)));
+        newDriver.setBirthDate(req.getBirthDate());
+
+        String rawTempPassword = PasswordGeneratorUtil.generateCompliantPassword();
+        newDriver.setPasswordHash(passwordEncoder.encode(rawTempPassword));
+
         newDriver.setStatus(UserStatus.ACTIVE);
-//        newDriver.setStatus(UserStatus.PENDING_VERIFICATION);
-        newDriver.setFullName(newDriver.getFullName() != null ? newDriver.getFullName() : "Unnamed Driver");
-        newDriver.setEmail(newDriver.getEmail());
-        newDriver.setGender(newDriver.getGender() != null ? newDriver.getGender() : Gender.MALE);
 
         userRepository.save(newDriver);
-
         notificationService.sendWelcomePasswordSetEmail(newDriver.getEmail());
     }
 
     @Transactional
-    public void updateFleetDriver(UUID driverId, User updatedData, String adminEmail) {
+    public void updateFleetDriver(UUID driverId, UpdateFleetDriverDto updatedData, String adminEmail) {
         User loggedInAdmin = userRepository.findByEmail(adminEmail)
                 .orElseThrow(() -> new IllegalStateException("Admin user not found."));
 
         User existingDriver = userRepository.findById(driverId)
                 .orElseThrow(() -> new IllegalArgumentException("Driver not found."));
 
-        // Security Check: Is this a fleet driver?
+        // Security Check 1: Is this a fleet driver?
         if (existingDriver.getRole() != Role.FLEET_DRIVER) {
             throw new IllegalArgumentException("Target user is not a fleet driver.");
         }
 
-        // Security Check: Does this driver belong to the Admin's company?
+        // Security Check 2: Does this driver belong to the Admin's company?
         if (existingDriver.getCompany() == null ||
                 !existingDriver.getCompany().getCompanyId().equals(loggedInAdmin.getCompany().getCompanyId())) {
             throw new IllegalStateException("You are not authorized to edit drivers outside your company.");
         }
 
-        // Apply updates
-        if (updatedData.getFullName() != null) existingDriver.setFullName(updatedData.getFullName());
-        if (updatedData.getGender() != null) existingDriver.setGender(updatedData.getGender());
-        if (updatedData.getStatus() != null) existingDriver.setStatus(updatedData.getStatus());
+        // Apply partial updates from DTO
+        if (updatedData.getFullName() != null && !updatedData.getFullName().isBlank()) {
+            existingDriver.setFullName(updatedData.getFullName());
+        }
+        if (updatedData.getGender() != null) {
+            existingDriver.setGender(updatedData.getGender());
+        }
+        if (updatedData.getStatus() != null) {
+            existingDriver.setStatus(updatedData.getStatus());
+        }
 
-        if (updatedData.getPasswordHash() != null && !updatedData.getPasswordHash().trim().isEmpty()) {
-            existingDriver.setPasswordHash(passwordEncoder.encode(updatedData.getPasswordHash()));
+        // Only update password if one was explicitly provided
+        if (updatedData.getNewPassword() != null && !updatedData.getNewPassword().trim().isEmpty()) {
+            existingDriver.setPasswordHash(passwordEncoder.encode(updatedData.getNewPassword()));
         }
 
         userRepository.save(existingDriver);

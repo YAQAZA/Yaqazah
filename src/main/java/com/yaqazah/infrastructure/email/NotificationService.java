@@ -6,6 +6,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;
 
@@ -71,8 +73,10 @@ public class NotificationService {
             redisTemplate.opsForValue().set(PREFIX_RESET + email, otp, 3, TimeUnit.DAYS);
             //3 Link for frontend
             // (Replace "localhost:3000" with your actual frontend URL)
-            String frontendResetUrl = "https://localhost:3000/set-password";
-
+            String frontendResetUrl =
+                    "https://admin-dashboard-91eab.web.app/#/reset-password" +
+                            "?mail=" + URLEncoder.encode(email, StandardCharsets.UTF_8) +
+                            "&otp=" + otp;
             // 4. Send the email
             String subject = "Welcome to Yaqazah! Please set your password";
             String body = "Hello,\n\n" +

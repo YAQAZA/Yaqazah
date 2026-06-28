@@ -5,8 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.Instant;
 import java.util.UUID;
+
+import org.hibernate.annotations.SQLRestriction;
 
 @Setter
 @Getter
@@ -14,11 +18,17 @@ import java.util.UUID;
 @AllArgsConstructor
 @Entity
 @Table(name = "company")
+@SQLRestriction("is_deleted = false")
 public class Company {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID companyId;
     private String name;
     private String address;
-    private String createdAt;
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private Instant insertedAt;
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean isDeleted = false;
+    private Instant deletedAt = null;
 }

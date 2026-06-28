@@ -74,6 +74,10 @@ cloudinary:
   api-key: ${cloudinary_api_key:fake-api-key}
   api-secret: ${cloudinary_api_secret:fake-api-secret}
 
+#stripe:
+#  api:
+#    key: ${STRIPE_SECRET_KEY}
+
 
 ########################################################
 #spring:

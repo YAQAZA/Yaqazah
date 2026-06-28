@@ -7,10 +7,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class DetectionLogDto {
     private String eventId;
     private String timestamp;

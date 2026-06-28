@@ -185,7 +185,7 @@ public class UserService {
     private void deleteUserAssociatedData(User user) {
         refreshTokenRepository.deleteByUser(user);
         detectionLogRepository.deleteByUser(user);
-        sessionRepository.deleteByUser(user);
+        sessionRepository.deleteByUserId(user.getUserId());
     }
 
     // ========================================================================

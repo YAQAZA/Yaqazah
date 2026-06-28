@@ -10,4 +10,6 @@ public interface SessionRepository extends JpaRepository<Session, UUID> {
     List<Session> findByUserId(UUID driverId);
 
     List<Session> findByStartDateTimeStartingWith(String date);
+
+    void deleteByUserId(UUID userId);
 }

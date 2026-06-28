@@ -229,9 +229,9 @@ public class NewDashboardService {
             TrendResolution resolution) {
 
         List<Object[]> rows = switch (resolution.granularity()) {
-            case TrendGranularity.HOURLY -> dashboardRepository.countAlertsHourly(companyId, startIso, endIsoExclusive);
-            case TrendGranularity.DAILY -> dashboardRepository.countAlertsDaily(companyId, startIso, endIsoExclusive);
-            case TrendGranularity.MONTHLY -> dashboardRepository.countAlertsMonthly(companyId, startIso, endIsoExclusive);
+            case HOURLY -> dashboardRepository.countAlertsHourly(companyId, startIso, endIsoExclusive);
+            case DAILY -> dashboardRepository.countAlertsDaily(companyId, startIso, endIsoExclusive);
+            case MONTHLY -> dashboardRepository.countAlertsMonthly(companyId, startIso, endIsoExclusive);
         };
 
         Map<String, Map<Integer, Long>> countMap = new HashMap<>();

@@ -74,11 +74,11 @@ cloudinary:
   api-key: ${cloudinary_api_key:fake-api-key}
   api-secret: ${cloudinary_api_secret:fake-api-secret}
 
-app:
-  security:
-    # This tells Spring: "Look for an environment variable named API_KEY on Azure.
-    # If you are running locally and can't find it, use 'yaqazah_dev_key_123'."
-    api-key: ${API_KEY}
+#app:
+#  security:
+#    # This tells Spring: "Look for an environment variable named API_KEY on Azure.
+#    # If you are running locally and can't find it, use 'yaqazah_dev_key_123'."
+#    api-key: ${API_KEY}
 
 #stripe:
 #  api:

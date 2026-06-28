@@ -96,7 +96,7 @@ public class AuthService {
 
         Company newCompany = new Company();
         newCompany.setName(req.getCompanyName());
-        newCompany.setAddress(req.getCompanyAddress());
+//        newCompany.setAddress(req.getCompanyAddress());
 
         Company savedCompany = companyService.createCompany(newCompany);
 

@@ -32,7 +32,7 @@ public class CompanyOwnerRegistrationDto {
 
     @NotBlank(message = "Company name is required")
     private String companyName;
-    private String companyAddress;
+//    private String companyAddress;
 
     @Past
     private LocalDate birthDate;

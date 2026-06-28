@@ -56,9 +56,9 @@ public class NewAdminDriversAnalyticsService {
         this.userRepository = userRepository;
     }
 
-    @Cacheable(value = "admin:drivers", key = "#companyId + ':' + #filter + ':' + #fromIso + ':' + #toIso")
+    @Cacheable(value = "admin:drivers", key = "#companyId + ':' + #filter + ':' + #fromIso + ':' + #toIso + ':' + (#search != null ? #search : '')")
     @Transactional(readOnly = true)
-    public DriversListResponseDto buildDriversList(UUID companyId, String filter, String fromIso, String toIso) {
+    public DriversListResponseDto buildDriversList(UUID companyId, String filter, String fromIso, String toIso, String search) {
         DateRange range = DashboardFilterResolver.resolve(filter, fromIso, toIso);
         String curStartIso = startOfDayUtcIso(range.from());
         String curEndExcl = startOfDayUtcIso(range.to().plusDays(1));
@@ -79,13 +79,24 @@ public class NewAdminDriversAnalyticsService {
         Double avgScorePrev = calculatePooledCompanyScore(prevMetricsMap.values(), activePrev);
 
         // 2. Map all drivers using instant O(1) Memory Lookups
-        List<DriverSummaryDto> drivers = new ArrayList<>();
+        List<DriverSummaryDto> allDrivers = new ArrayList<>();
         for (Object[] row : repository.findFleetDriversForCompany(companyId, Role.FLEET_DRIVER)) {
-            drivers.add(mapDriverRow(row, curMetricsMap));
+            allDrivers.add(mapDriverRow(row, curMetricsMap));
         }
 
-        long highRiskCur = drivers.stream().filter(d -> d.getRiskId() == 2).count();
+        long highRiskCur = allDrivers.stream().filter(d -> d.getRiskId() == 2).count();
         long highRiskPrev = countHighRiskMapEntries(prevMetricsMap);
+
+        // Apply search filter (driver name)
+        List<DriverSummaryDto> filteredDrivers = new ArrayList<>();
+        for (DriverSummaryDto dto : allDrivers) {
+            if (search != null && !search.trim().isEmpty()) {
+                if (dto.getName() == null || !dto.getName().toLowerCase().contains(search.toLowerCase().trim())) {
+                    continue;
+                }
+            }
+            filteredDrivers.add(dto);
+        }
 
         return DriversListResponseDto.builder()
                 .filterId(DashboardFilterResolver.toFilterId(filter))
@@ -94,7 +105,7 @@ public class NewAdminDriversAnalyticsService {
                         overviewStat("Active Drivers", activeCur, activePrev, false),
                         overviewStat("Average Safety Score", avgScoreCur, avgScorePrev, true),
                         overviewStat("High Risk Drivers", highRiskCur, highRiskPrev, false)))
-                .drivers(drivers)
+                .drivers(filteredDrivers)
                 .build();
     }
 

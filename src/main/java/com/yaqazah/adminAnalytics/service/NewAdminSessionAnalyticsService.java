@@ -35,9 +35,9 @@ public class NewAdminSessionAnalyticsService {
         this.repository = repository;
     }
 
-    @Cacheable(value = "admin:sessions", key = "#companyId + ':' + #filter + ':' + #fromIso + ':' + #toIso")
+    @Cacheable(value = "admin:sessions", key = "#companyId + ':' + #filter + ':' + #fromIso + ':' + #toIso + ':' + (#search != null ? #search : '') + ':' + (#risk != null ? #risk : '')")
     @Transactional(readOnly = true)
-    public SessionsListResponseDto buildSessionsList(UUID companyId, String filter, String fromIso, String toIso) {
+    public SessionsListResponseDto buildSessionsList(UUID companyId, String filter, String fromIso, String toIso, String search, String risk) {
         DashboardFilterResolver.DateRange range = DashboardFilterResolver.resolve(filter, fromIso, toIso);
         String curStartIso = startOfDayUtcIso(range.from());
         String curEndExcl = startOfDayUtcIso(range.to().plusDays(1));
@@ -61,10 +61,39 @@ public class NewAdminSessionAnalyticsService {
         Double avgScoreCur = calculatePooledCompanyScore(curMetricsMap.values(), sessionsCur);
         Double avgScorePrev = calculatePooledCompanyScore(prevMetricsMap.values(), sessionsPrev);
 
-        // 3. Assemble list using O(1) Memory Lookups instead of N+1 database queries
+        // Resolve risk filter
+        Integer targetRiskId = null;
+        if (risk != null && !risk.trim().isEmpty()) {
+            String riskLower = risk.toLowerCase().trim();
+            if (riskLower.equals("low") || riskLower.equals("0")) {
+                targetRiskId = 0;
+            } else if (riskLower.equals("medium") || riskLower.equals("1")) {
+                targetRiskId = 1;
+            } else if (riskLower.equals("high") || riskLower.equals("2")) {
+                targetRiskId = 2;
+            }
+        }
+
+        // 3. Assemble and filter list using O(1) Memory Lookups instead of N+1 database queries
         List<SessionSummaryDto> sessions = new ArrayList<>();
         for (Object[] row : repository.findSessionsForCompanyInPeriod(companyId, Role.FLEET_DRIVER, curStartIso, curEndExcl)) {
-            sessions.add(mapSessionRow(row, curMetricsMap));
+            SessionSummaryDto dto = mapSessionRow(row, curMetricsMap);
+
+            // Filter by driver name (case-insensitive substring search)
+            if (search != null && !search.trim().isEmpty()) {
+                if (dto.getDriver() == null || !dto.getDriver().toLowerCase().contains(search.toLowerCase().trim())) {
+                    continue;
+                }
+            }
+
+            // Filter by risk level
+            if (targetRiskId != null) {
+                if (dto.getRiskId() != targetRiskId) {
+                    continue;
+                }
+            }
+
+            sessions.add(dto);
         }
 
         return SessionsListResponseDto.builder()

@@ -82,12 +82,12 @@ public class NewAdminSessionAnalyticsService {
     @Cacheable(value = "admin:session-detail", key = "#companyId + ':' + #sessionId")
     @Transactional(readOnly = true)
     public Optional<SessionDetailsResponseDto> buildSessionDetails(UUID companyId, UUID sessionId) {
-        Optional<Object> sessionRow = repository.findSessionForCompany(sessionId, companyId, Role.FLEET_DRIVER);
+        List<Object[]> sessionRow = repository.findSessionForCompany(sessionId, companyId, Role.FLEET_DRIVER);
         if (sessionRow.isEmpty()) {
             return Optional.empty();
         }
 
-        Object[] row = (Object[]) sessionRow.get();
+        Object[] row = sessionRow.get(0);
         UUID sid = (UUID) row[0];
         String driverName = (String) row[1];
         UUID driverId = (UUID) row[2];

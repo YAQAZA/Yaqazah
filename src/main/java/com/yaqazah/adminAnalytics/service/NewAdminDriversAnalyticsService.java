@@ -103,7 +103,7 @@ public class NewAdminDriversAnalyticsService {
     public Optional<DriverDetailResponseDto> buildDriverDetail(
             UUID companyId, UUID driverId, String filter, String fromIso, String toIso) {
 
-        Optional<Object[]> driverRow = repository.findDriverForCompany(driverId, companyId, Role.FLEET_DRIVER);
+        List<Object[]> driverRow = repository.findDriverForCompany(driverId, companyId, Role.FLEET_DRIVER);
         if (driverRow.isEmpty()) {
             return Optional.empty();
         }
@@ -135,8 +135,8 @@ public class NewAdminDriversAnalyticsService {
 
         // Fetch company map to resolve the single driver's top-level summary DTO
         Map<UUID, DensityMetric> curCompanyMap = fetchDriverDensityMap(companyId, curStartIso, curEndExcl);
-        Object[] wrappedRow = driverRow.get();
-        DriverSummaryDto selected = mapDriverRow((Object[]) wrappedRow[0], curCompanyMap);
+        Object[] driverRowArray = driverRow.get(0);
+        DriverSummaryDto selected = mapDriverRow(driverRowArray, curCompanyMap);
 
         List<SessionSummaryDto> sessions = new ArrayList<>();
         Map<String, List<Integer>> scoresBySqlKey = new HashMap<>();

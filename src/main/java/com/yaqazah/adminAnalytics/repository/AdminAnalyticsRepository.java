@@ -38,7 +38,7 @@ public interface AdminAnalyticsRepository extends JpaRepository<DetectionLog, UU
                           and u.company.companyId = :companyId
                           and u.role = :driverRole
                         """)
-        Optional<Object> findSessionForCompany(
+        List<Object[]> findSessionForCompany(
                         @Param("sessionId") UUID sessionId,
                         @Param("companyId") UUID companyId,
                         @Param("driverRole") Role driverRole);
@@ -78,7 +78,7 @@ public interface AdminAnalyticsRepository extends JpaRepository<DetectionLog, UU
                           and u.company.companyId = :companyId
                           and u.role = :driverRole
                         """)
-        Optional<Object[]> findDriverForCompany(
+        List<Object[]> findDriverForCompany(
                         @Param("driverId") UUID driverId,
                         @Param("companyId") UUID companyId,
                         @Param("driverRole") Role driverRole);

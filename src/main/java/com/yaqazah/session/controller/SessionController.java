@@ -1,68 +1,52 @@
 package com.yaqazah.session.controller;
 
+import com.yaqazah.session.dto.SessionUploadRequest;
+import com.yaqazah.session.model.Session;
 import com.yaqazah.session.service.SessionService;
+import com.yaqazah.user.model.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/sessions")
-@Tag(name = "Driving Sessions", description = "Endpoints for starting, pausing, resuming, and ending driving sessions.")
+@CrossOrigin(origins = "*")
+@Tag(name = "Driving Sessions", description = "Endpoint for uploading a completed driving session with all its detection logs.")
 public class SessionController {
 
     @Autowired
     private SessionService sessionService;
 
-    // START creates a new session, so POST is perfect here!
-    @Operation(summary = "Start a new driving session", description = "Creates and starts a new session for the specified driver using their User ID.")
+    @Operation(
+            summary = "Upload a completed session",
+            description = "Accepts a completed driving session and all its detection logs. " +
+                    "Creates the session record and all log records in a single transaction."
+    )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Session started successfully"),
-            @ApiResponse(responseCode = "403", description = "Forbidden (Requires DRIVER role)"),
-            @ApiResponse(responseCode = "404", description = "Driver not found")
+            @ApiResponse(responseCode = "200", description = "Session uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request body"),
+            @ApiResponse(responseCode = "403", description = "Forbidden"),
+            @ApiResponse(responseCode = "404", description = "User not found")
     })
-    @PostMapping("/start/{driverId}")
-    public void createSession(@PathVariable UUID driverId) {
-        sessionService.startSession(driverId);
-    }
-
-    // PAUSE is a partial update, so we use PATCH
-    @Operation(summary = "Pause an active session", description = "Pauses an ongoing driving session using the unique Session ID.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Session paused successfully"),
-            @ApiResponse(responseCode = "403", description = "Forbidden (Requires DRIVER role)"),
-            @ApiResponse(responseCode = "404", description = "Session not found")
-    })
-    @PatchMapping("/pause/{sessionId}")
-    public void pauseSession(@PathVariable UUID sessionId) {
-        sessionService.pauseSession(sessionId);
-    }
-
-    // RESUME is a partial update, so we use PATCH
-    @Operation(summary = "Resume a paused session", description = "Resumes a previously paused driving session.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Session resumed successfully"),
-            @ApiResponse(responseCode = "403", description = "Forbidden (Requires DRIVER role)"),
-            @ApiResponse(responseCode = "404", description = "Session not found")
-    })
-    @PatchMapping("/resume/{sessionId}")
-    public void resumeSession(@PathVariable UUID sessionId) {
-        sessionService.resumeSession(sessionId);
-    }
-
-    // END is a partial update, so we use PATCH
-    @Operation(summary = "End a session", description = "Ends an active or paused driving session permanently.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Session ended successfully"),
-            @ApiResponse(responseCode = "403", description = "Forbidden (Requires DRIVER role)"),
-            @ApiResponse(responseCode = "404", description = "Session not found")
-    })
-    @PatchMapping("/end/{sessionId}")
-    public void endSession(@PathVariable UUID sessionId) {
-        sessionService.endSession(sessionId);
+    @PreAuthorize("hasAnyRole('FLEET_DRIVER', 'INDEPENDENT_DRIVER', 'ADMIN')")
+    @PostMapping
+    public ResponseEntity<String> uploadSession(
+            @RequestBody SessionUploadRequest request,
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails authenticatedUser
+    ) {
+        try {
+            Session saved = sessionService.uploadSession(request, authenticatedUser.getUsername());
+            return ResponseEntity.ok("Session uploaded successfully. ID: " + saved.getSessionId());
+        } catch (SecurityException e) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body("Error: " + e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
     }
 }

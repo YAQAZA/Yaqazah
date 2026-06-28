@@ -1,0 +1,252 @@
+{
+	"info": {
+		"_postman_id": "c2222222-2222-2222-2222-222222222222",
+		"name": "Yaqazah Company Analytics API",
+		"description": "Postman collection to test the Company Admin Analytics endpoints including sessions and drivers lookup for a company fleet.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Login Admin (Web Dashboard)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var response = pm.response.json();",
+							"if (response.token) {",
+							"    pm.environment.set(\"adminToken\", response.token);",
+							"}"
+						],
+						"type": "javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+						"description": "Desktop browser User-Agent so that DeviceInterceptor marks isMobile=false (required for admin logins)"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"admin@acmefleet.com\",\n  \"password\": \"Password@123\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"auth",
+						"login"
+					]
+				},
+				"description": "Logs in the Company Admin. Note: The User-Agent header must NOT contain 'mobile' or it will fail with 403 Forbidden under device restriction rules."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Get Company Sessions",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{adminToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/admin/analytics/sessions?filter=custom&from=2026-06-01T00:00:00Z&to=2026-06-30T23:59:59Z",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"admin",
+						"analytics",
+						"sessions"
+					],
+					"query": [
+						{
+							"key": "filter",
+							"value": "custom"
+						},
+						{
+							"key": "from",
+							"value": "2026-06-01T00:00:00Z"
+						},
+						{
+							"key": "to",
+							"value": "2026-06-30T23:59:59Z"
+						}
+					]
+				},
+				"description": "Lists all driving sessions for the company's drivers within the specified date range, along with overview statistics."
+			},
+			"response": []
+		},
+		{
+			"name": "3. Get Session Details",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{adminToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/admin/analytics/sessions/details/{{sessionId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"admin",
+						"analytics",
+						"sessions",
+						"details",
+						"{{sessionId}}"
+					]
+				},
+				"description": "Retrieves the detailed info and all detection logs for a single driving session. Replace {{sessionId}} with the UUID printed by the sql script."
+			},
+			"response": []
+		},
+		{
+			"name": "4. Get Fleet Drivers",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{adminToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/admin/analytics/drivers?filter=custom&from=2026-06-01T00:00:00Z&to=2026-06-30T23:59:59Z",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"admin",
+						"analytics",
+						"drivers"
+					],
+					"query": [
+						{
+							"key": "filter",
+							"value": "custom"
+						},
+						{
+							"key": "from",
+							"value": "2026-06-01T00:00:00Z"
+						},
+						{
+							"key": "to",
+							"value": "2026-06-30T23:59:59Z"
+						}
+					]
+				},
+				"description": "Lists all drivers belonging to the admin's company along with summary statistics (sessions count, last active, etc.)."
+			},
+			"response": []
+		},
+		{
+			"name": "5. Get Driver Detailed Analytics",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{adminToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/admin/analytics/driver?driverId={{driverId}}&filter=custom&from=2026-06-01T00:00:00Z&to=2026-06-30T23:59:59Z",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"admin",
+						"analytics",
+						"driver"
+					],
+					"query": [
+						{
+							"key": "driverId",
+							"value": "{{driverId}}"
+						},
+						{
+							"key": "filter",
+							"value": "custom"
+						},
+						{
+							"key": "from",
+							"value": "2026-06-01T00:00:00Z"
+						},
+						{
+							"key": "to",
+							"value": "2026-06-30T23:59:59Z"
+						}
+					]
+				},
+				"description": "Retrieves comprehensive analytics and safety metric scores for a single fleet driver. Replace {{driverId}} with one of the driver UUIDs printed by the sql script."
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "adminToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "sessionId",
+			"value": "s5555555-5555-5555-5555-555555555555",
+			"type": "string"
+		},
+		{
+			"key": "driverId",
+			"value": "d3333333-3333-3333-3333-333333333333",
+			"type": "string"
+		}
+	]
+}

@@ -8,7 +8,7 @@ import java.util.UUID;
 
 @Setter @Getter @NoArgsConstructor @AllArgsConstructor
 @Entity
-@Table(name = "detection_event")
+@Table(name = "detection_log")
 public class DetectionLog {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -22,14 +22,15 @@ public class DetectionLog {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    private String title;
+    private String subtitle;
     private String timestamp;
 
-    @Enumerated(EnumType.STRING)
-    private DetectionType type;
-
-    private String severity;
-    private float valueDetected;
+    private int alertId;
+    private int riskId;
 
     @Column(columnDefinition = "TEXT")
     private String snapshotUrl;
+
+    private String insertionTimestamp;
 }

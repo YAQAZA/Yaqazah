@@ -1,7 +1,7 @@
 package com.yaqazah.dashboard.controller;
 
 import com.yaqazah.dashboard.dto.DashboardResponseDto;
-import com.yaqazah.dashboard.service.DashboardService;
+import com.yaqazah.dashboard.service.NewDashboardService;
 import com.yaqazah.user.model.User;
 import com.yaqazah.user.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,16 +18,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/dashboard")
+@RequestMapping("/api/admin/dashboard")
 @Tag(name = "Dashboard", description = "Company admin analytics dashboard")
 public class DashboardController {
 
-    private final DashboardService dashboardService;
     private final UserRepository userRepository;
+    private final NewDashboardService newDashboardService;
 
-    public DashboardController(DashboardService dashboardService, UserRepository userRepository) {
-        this.dashboardService = dashboardService;
+    public DashboardController(UserRepository userRepository, NewDashboardService newDashboardService) {
         this.userRepository = userRepository;
+        this.newDashboardService = newDashboardService;
     }
 
     //new Code
@@ -46,7 +46,7 @@ public class DashboardController {
             if (user.getCompany() == null) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
-            return ResponseEntity.ok(dashboardService.buildDashboard(
+            return ResponseEntity.ok(newDashboardService.buildDashboard(
                     user.getCompany().getCompanyId(), filter, from, to));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();

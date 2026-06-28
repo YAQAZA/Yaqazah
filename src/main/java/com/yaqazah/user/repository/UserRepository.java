@@ -27,12 +27,11 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmail(String email);
 
     @Query("SELECT new com.yaqazah.report.dto.DriverSessionReportDto(" +
-            "u.userId, u.fullName, s.sessionId, s.startTime, s.endTime, s.durationHours, s.totalAlerts, " +
-            "d.eventId, d.timestamp, cast(d.type as string), d.severity, d.valueDetected) " +
+            "u.userId, u.fullName, s.sessionId, s.startDateTime, s.endDateTime, s.durationHours, s.totalAlerts, " +
+            "d.eventId, d.timestamp, d.alertId, d.riskId, d.title, d.subtitle) " +
             "FROM User u " +
             "LEFT JOIN Session s ON u.userId = s.userId " +
             "LEFT JOIN DetectionLog d ON s.sessionId = d.session.sessionId " +
-            "WHERE u.company.companyId = :companyId AND u.role = 'DRIVER'")
-        // The compiler expects clarity on the type inside the list
+            "WHERE u.company.companyId = :companyId AND u.role = com.yaqazah.user.model.Role.FLEET_DRIVER")
     List<DriverSessionReportDto> findCombinedDriverDataByCompany(@Param("companyId") UUID companyId);
 }

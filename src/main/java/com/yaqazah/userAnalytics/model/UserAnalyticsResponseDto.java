@@ -1,6 +1,10 @@
-package com.yaqazah.dashboard.dto;
+package com.yaqazah.userAnalytics.model;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.yaqazah.dashboard.dto.AlertTrendValueDto;
+import com.yaqazah.dashboard.dto.OverviewStatDto;
+import com.yaqazah.dashboard.dto.PieDistributionDto;
+import com.yaqazah.dashboard.dto.RiskDistributionDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,24 +16,23 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-
 @JsonPropertyOrder({
         "filterId",
-        "overviewStats",
+        "timeInterval",
         "trendLabels",
+        "performanceTrend",
         "alertTrendValues",
+        "overviewStats",
         "pieDistribution",
-        "riskDistribution",
-        "recentSessions",
-        "topPerformers"
+        "riskDistribution"
 })
-public class DashboardResponseDto {
+public class UserAnalyticsResponseDto {
     private String filterId;
+    private String timeInterval;
     private List<OverviewStatDto> overviewStats;
+    private List<Integer> performanceTrend;
     private List<AlertTrendValueDto> alertTrendValues;
     private List<PieDistributionDto> pieDistribution;
     private List<RiskDistributionDto> riskDistribution;
-    private List<RecentSessionDto> recentSessions;
-    private List<TopPerformerDto> topPerformers;
-    private List<String> trendLabels; // <-- ADD THIS
+    private List<String> trendLabels; //<-- I added this
 }

@@ -1,10 +1,14 @@
 package com.yaqazah.adminAnalytics.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class SessionDetailDto {
     private String sessionId;
     private String driver;

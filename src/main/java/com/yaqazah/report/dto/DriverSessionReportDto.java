@@ -6,15 +6,16 @@ public record DriverSessionReportDto(
         UUID driverId,
         String driverFullName,
         UUID sessionId,
-        String startTime,
-        String endTime,
-        Float durationHours,
+        String startDateTime,
+        String endDateTime,
+        Double durationHours,
         Integer totalAlerts,
 
         // Detection Info (Will be null if the session had no alerts)
         UUID eventId,
         String eventTimestamp,
-        String detectionType,
-        String severity,
-        Float valueDetected
+        Integer alertId,
+        Integer riskId,
+        String title,
+        String subtitle
 ) {}

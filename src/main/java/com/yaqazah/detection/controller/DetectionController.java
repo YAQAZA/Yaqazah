@@ -1,46 +1,42 @@
 package com.yaqazah.detection.controller;
 
-import com.yaqazah.detection.dto.DetectionRequest;
+import com.yaqazah.adminAnalytics.dto.DetectionLogDto;
 import com.yaqazah.detection.model.DetectionLog;
 import com.yaqazah.detection.repository.DetectionLogRepository;
-import com.yaqazah.detection.service.DetectionService;
-import com.yaqazah.user.model.User;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * DetectionController: legacy read-only endpoint for fetching detection logs by session.
+ * Writing detection logs is now done via POST /api/sessions.
+ */
 @RestController
 @RequestMapping("/api/detections")
 @CrossOrigin(origins = "*")
+@Tag(name = "Detections", description = "Read-only detection log endpoints.")
 public class DetectionController {
-
-    @Autowired
-    private DetectionService detectionService;
 
     @Autowired
     private DetectionLogRepository detectionLogRepo;
 
-    @PreAuthorize("hasAnyRole('FLEET_DRIVER', 'INDEPENDENT_DRIVER')")
-    @PostMapping("/log")
-    public ResponseEntity<String> logDetection(
-            @RequestBody DetectionRequest request,
-            @AuthenticationPrincipal User user
-    ) {
-        try {
-            detectionService.processDetection(request, user);
-            return ResponseEntity.ok("Detection logged successfully");
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
-        }
-    }
-
     @GetMapping("/session/{sessionId}")
-    public ResponseEntity<List<DetectionLog>> getSessionLogs(@PathVariable UUID sessionId) {
-        return ResponseEntity.ok(detectionLogRepo.findBySession_SessionId(sessionId));
+    public ResponseEntity<List<DetectionLogDto>> getSessionLogs(@PathVariable UUID sessionId) {
+        List<DetectionLog> logs = detectionLogRepo.findBySession_SessionId(sessionId);
+        List<DetectionLogDto> dtos = logs.stream().map(log -> DetectionLogDto.builder()
+                .eventId(log.getEventId() != null ? log.getEventId().toString() : null)
+                .timestamp(log.getTimestamp())
+                .alertId(log.getAlertId())
+                .riskId(log.getRiskId())
+                .title(log.getTitle())
+                .subtitle(log.getSubtitle())
+                .snapshotUrl(log.getSnapshotUrl())
+                .build()
+        ).toList();
+        return ResponseEntity.ok(dtos);
     }
 }

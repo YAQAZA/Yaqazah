@@ -1,6 +1,8 @@
 package com.yaqazah.detection.dto;
 
+//import com.yaqazah.detection.model.AlertType;
 import com.yaqazah.detection.model.DetectionType;
+//import com.yaqazah.detection.model.RiskId;
 import lombok.*;
 import java.util.UUID;
 
@@ -11,6 +13,9 @@ public class DetectionRequest {
     private UUID sessionId;
     private String timestamp;
     private DetectionType type;
+
+//    private RiskId riskId;
+//    private AlertType alertType;
 
     // ADD THIS FIELD
     private String severity;

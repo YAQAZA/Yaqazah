@@ -1,0 +1,200 @@
+{
+	"info": {
+		"_postman_id": "b3b0b2b9-a2a5-4226-83b6-57b8c1f64202",
+		"name": "Yaqazah Driving Sessions API",
+		"description": "Postman collection to test the driver registration, authentication, and session upload endpoints for the Yaqazah application.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Sign Up (Driver)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"driver@yaqazah.com\",\n  \"passwordHash\": \"Password@123\",\n  \"fullName\": \"John Doe\",\n  \"gender\": \"MALE\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/auth/signup",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"auth",
+						"signup"
+					]
+				},
+				"description": "Registers a new independent driver in the system. On registration, an OTP is sent to their email and stored in Redis."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Verify Email OTP",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var response = pm.response.json();",
+							"if (response.data && response.data.token) {",
+							"    pm.environment.set(\"token\", response.data.token);",
+							"    pm.environment.set(\"userId\", response.data.user.userId || response.data.user.id);",
+							"}"
+						],
+						"type": "javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"driver@yaqazah.com\",\n  \"otp\": \"123456\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/auth/verify-email",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"auth",
+						"verify-email"
+					]
+				},
+				"description": "Verifies the driver's email using the OTP code. Retrieve the OTP code from Redis using:\n`redis-cli GET OTP_VERIFY:driver@yaqazah.com`\nThis request automatically sets the `token` environment variable on success."
+			},
+			"response": []
+		},
+		{
+			"name": "3. Login (Driver - Mobile Forced)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var response = pm.response.json();",
+							"if (response.token) {",
+							"    pm.environment.set(\"token\", response.token);",
+							"}"
+						],
+						"type": "javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1",
+						"description": "Forced mobile user agent so that DeviceInterceptor marks isMobile=true (required for driver logins)"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"driver@yaqazah.com\",\n  \"password\": \"Password@123\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"auth",
+						"login"
+					]
+				},
+				"description": "Logs in the driver. The request MUST include a User-Agent header with the word \"mobile\" or it will be rejected with 403 Forbidden under device enforcement rules."
+			},
+			"response": []
+		},
+		{
+			"name": "4. Upload driving session",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"session\": {\n    \"userId\": \"{{userId}}\",\n    \"startDateTime\": \"2026-06-27T03:00:00Z\",\n    \"endDateTime\": \"2026-06-27T04:00:00Z\",\n    \"duration\": 1.0\n  },\n  \"logs\": [\n    {\n      \"title\": \"Distraction\",\n      \"subtitle\": \"Driver looked away from road for 3.2 seconds\",\n      \"timestamp\": \"2026-06-27T03:15:22Z\",\n      \"riskId\": 2,\n      \"alertId\": 1,\n      \"snapshotUrl\": \"https://yaqazahstorage.blob.core.windows.net/snapshots/distraction_event.jpg\",\n      \"photoBase64\": \"\"\n    },\n    {\n      \"title\": \"Drowsiness\",\n      \"subtitle\": \"Driver closed eyes for 2.1 seconds\",\n      \"timestamp\": \"2026-06-27T03:45:10Z\",\n      \"riskId\": 3,\n      \"alertId\": 2,\n      \"snapshotUrl\": \"\",\n      \"photoBase64\": \"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=\"\n    }\n  ]\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/sessions",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"sessions"
+					]
+				},
+				"description": "Uploads the driving session along with its event logs. Drivers are not allowed to specify a `userId` belonging to other users. If `photoBase64` is provided, it will automatically be converted to a file and uploaded to storage."
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

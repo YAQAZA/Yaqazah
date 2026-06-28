@@ -13,19 +13,15 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "session")
+@Table(name = "sessions")
 public class Session {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID sessionId;
-
     private UUID userId;
-    private String startTime;
-    private String endTime;
-    private float durationHours;
+    private String startDateTime;
+    private String endDateTime;
+    private double durationHours;
     private int totalAlerts;
-
-    @Enumerated(EnumType.STRING)
-    private SessionStatus status;
-
+    private String insertionTimestamp;
 }

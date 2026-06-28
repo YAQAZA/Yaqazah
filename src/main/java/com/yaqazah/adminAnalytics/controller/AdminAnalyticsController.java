@@ -4,8 +4,8 @@ import com.yaqazah.adminAnalytics.dto.DriverDetailResponseDto;
 import com.yaqazah.adminAnalytics.dto.DriversListResponseDto;
 import com.yaqazah.adminAnalytics.dto.SessionDetailsResponseDto;
 import com.yaqazah.adminAnalytics.dto.SessionsListResponseDto;
-import com.yaqazah.adminAnalytics.service.DriversAnalyticsService;
-import com.yaqazah.adminAnalytics.service.SessionAnalyticsService;
+import com.yaqazah.adminAnalytics.service.NewAdminDriversAnalyticsService;
+import com.yaqazah.adminAnalytics.service.NewAdminSessionAnalyticsService;
 import com.yaqazah.user.model.User;
 import com.yaqazah.user.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,18 +25,21 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/admin-analytics")
+@RequestMapping("/api/admin/analytics")
 @Tag(name = "Admin Analytics", description = "Company-scoped analytics for sessions and drivers")
 public class AdminAnalyticsController {
 
-    private final DriversAnalyticsService driversAnalyticsService;
-    private final SessionAnalyticsService sessionAnalyticsService;
     private final UserRepository userRepository;
+    private final NewAdminDriversAnalyticsService newAdminDriversAnalyticsService;
+    private final NewAdminSessionAnalyticsService newAdminSessionAnalyticsService;
 
-    public AdminAnalyticsController(DriversAnalyticsService driversAnalyticsService, UserRepository userRepository, SessionAnalyticsService sessionAnalyticsService) {
-        this.driversAnalyticsService = driversAnalyticsService;
+    public AdminAnalyticsController(
+            UserRepository userRepository,
+            NewAdminDriversAnalyticsService newAdminDriversAnalyticsService,
+            NewAdminSessionAnalyticsService newAdminSessionAnalyticsService) {
         this.userRepository = userRepository;
-        this.sessionAnalyticsService = sessionAnalyticsService;
+        this.newAdminDriversAnalyticsService = newAdminDriversAnalyticsService;
+        this.newAdminSessionAnalyticsService = newAdminSessionAnalyticsService;
     }
 
     @Operation(summary = "List sessions", description = "Sessions and overview stats for the authenticated company admin's fleet.")
@@ -48,7 +51,7 @@ public class AdminAnalyticsController {
             @RequestParam(value = "to", required = false) String to,
             @Parameter(hidden = true) Authentication authentication) {
         return executeForCompany(authentication, companyId ->
-                sessionAnalyticsService.buildSessionsList(companyId, filter, from, to));
+                newAdminSessionAnalyticsService.buildSessionsList(companyId, filter, from, to));
     }
 
     @Operation(summary = "Session details", description = "Detailed session data and detection logs for a single session.")
@@ -59,7 +62,7 @@ public class AdminAnalyticsController {
             @Parameter(hidden = true) Authentication authentication) {
         try {
             UUID companyId = resolveCompanyId(authentication);
-            return sessionAnalyticsService.buildSessionDetails(companyId, sessionId)
+            return newAdminSessionAnalyticsService.buildSessionDetails(companyId, sessionId)
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (IllegalArgumentException ex) {
@@ -78,7 +81,7 @@ public class AdminAnalyticsController {
             @RequestParam(value = "to", required = false) String to,
             @Parameter(hidden = true) Authentication authentication) {
         return executeForCompany(authentication, companyId ->
-                driversAnalyticsService.buildDriversList(companyId, filter, from, to));
+                newAdminDriversAnalyticsService.buildDriversList(companyId, filter, from, to));
     }
 
     @Operation(summary = "Driver analytics", description = "Detailed analytics for a single driver within a date range.")
@@ -92,7 +95,7 @@ public class AdminAnalyticsController {
             @Parameter(hidden = true) Authentication authentication) {
         try {
             UUID companyId = resolveCompanyId(authentication);
-            return driversAnalyticsService.buildDriverDetail(companyId, driverId, filter, from, to)
+            return newAdminDriversAnalyticsService.buildDriverDetail(companyId, driverId, filter, from, to)
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (IllegalArgumentException ex) {

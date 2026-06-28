@@ -22,36 +22,36 @@ public class ReportService {
 
         List<DriverSessionReportDto> data = userRepository.findCombinedDriverDataByCompany(companyId);
 
-        // Update headers to include everything
         CSVFormat format = CSVFormat.DEFAULT.builder()
                 .setHeader("Driver ID", "Driver Name", "Session ID", "Start Time", "End Time",
-                        "Duration (Hrs)", "Total Alerts", "Event ID", "Event Time", "Alert Type",
-                        "Severity", "Value Detected")
+                        "Duration (Hrs)", "Total Alerts", "Event ID", "Event Time",
+                        "Alert ID", "Risk ID", "Title", "Subtitle")
                 .build();
 
         try (CSVPrinter csvPrinter = new CSVPrinter(writer, format)) {
 
             for (DriverSessionReportDto record : data) {
-                // Safely handle nulls for the detection fields
                 String eventId = record.eventId() != null ? record.eventId().toString() : "N/A";
                 String eventTime = record.eventTimestamp() != null ? record.eventTimestamp() : "N/A";
-                String type = record.detectionType() != null ? record.detectionType() : "None";
-                String severity = record.severity() != null ? record.severity() : "N/A";
-                String value = record.valueDetected() != null ? record.valueDetected().toString() : "N/A";
+                String alertId = record.alertId() != null ? record.alertId().toString() : "N/A";
+                String riskId = record.riskId() != null ? record.riskId().toString() : "N/A";
+                String title = record.title() != null ? record.title() : "N/A";
+                String subtitle = record.subtitle() != null ? record.subtitle() : "N/A";
 
                 csvPrinter.printRecord(
                         record.driverId(),
                         record.driverFullName(),
                         record.sessionId(),
-                        record.startTime(),
-                        record.endTime(),
+                        record.startDateTime(),
+                        record.endDateTime(),
                         record.durationHours(),
                         record.totalAlerts(),
                         eventId,
                         eventTime,
-                        type,
-                        severity,
-                        value
+                        alertId,
+                        riskId,
+                        title,
+                        subtitle
                 );
             }
 

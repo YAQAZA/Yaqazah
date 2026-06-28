@@ -9,5 +9,5 @@ import java.util.UUID;
 public interface SessionRepository extends JpaRepository<Session, UUID> {
     List<Session> findByUserId(UUID driverId);
 
-    List<Session> findByStartTimeStartingWith(String date);
+    List<Session> findByStartDateTimeStartingWith(String date);
 }

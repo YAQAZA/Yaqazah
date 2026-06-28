@@ -1,0 +1,203 @@
+{
+	"info": {
+		"_postman_id": "d3333333-3333-3333-3333-333333333333",
+		"name": "Yaqazah User Analytics API",
+		"description": "Postman collection to test the Independent Driver Analytics endpoints including sessions, detailed logs, and trend statistics.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Login Driver (Mobile Forced)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var response = pm.response.json();",
+							"if (response.token) {",
+							"    pm.environment.set(\"driverToken\", response.token);",
+							"}"
+						],
+						"type": "javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1",
+						"description": "Mobile User-Agent required to authenticate drivers under the device enforcer rules."
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"driver@independent.com\",\n  \"password\": \"Password@123\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"auth",
+						"login"
+					]
+				},
+				"description": "Logs in the Independent Driver. Note: The User-Agent header must contain 'mobile' or it will fail with 403 Forbidden under device restriction rules."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Get Driver Sessions",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{driverToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/user/analytics/sessions?filter=custom&from=2026-06-01T00:00:00Z&to=2026-06-30T23:59:59Z",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"user",
+						"analytics",
+						"sessions"
+					],
+					"query": [
+						{
+							"key": "filter",
+							"value": "custom"
+						},
+						{
+							"key": "from",
+							"value": "2026-06-01T00:00:00Z"
+						},
+						{
+							"key": "to",
+							"value": "2026-06-30T23:59:59Z"
+						}
+					]
+				},
+				"description": "Retrieves the sessions overview list for the authenticated driver within the selected date range."
+			},
+			"response": []
+		},
+		{
+			"name": "3. Get Session Details",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{driverToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/user/analytics/sessions/details/{{driverSessionId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"user",
+						"analytics",
+						"sessions",
+						"details",
+						"{{driverSessionId}}"
+					]
+				},
+				"description": "Retrieves detailed stats and detection logs for a single driving session. Replace {{driverSessionId}} with one of the session UUIDs printed by the test data SQL script."
+			},
+			"response": []
+		},
+		{
+			"name": "4. Get Driver Trend Analytics",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{driverToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/user/analytics/getAnalytics?filter=custom&from=2026-06-01T00:00:00Z&to=2026-06-30T23:59:59Z",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"user",
+						"analytics",
+						"getAnalytics"
+					],
+					"query": [
+						{
+							"key": "filter",
+							"value": "custom"
+						},
+						{
+							"key": "from",
+							"value": "2026-06-01T00:00:00Z"
+						},
+						{
+							"key": "to",
+							"value": "2026-06-30T23:59:59Z"
+						}
+					]
+				},
+				"description": "Retrieves high level performance analytics, safety trend lines, and risk distribution charts for the authenticated driver."
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "driverToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "driverSessionId",
+			"value": "s5555555-5555-5555-5555-555555555555",
+			"type": "string"
+		}
+	]
+}

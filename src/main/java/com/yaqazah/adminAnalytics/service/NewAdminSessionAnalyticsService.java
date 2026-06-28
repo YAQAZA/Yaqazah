@@ -35,9 +35,9 @@ public class NewAdminSessionAnalyticsService {
         this.repository = repository;
     }
 
-    @Cacheable(value = "admin:sessions", key = "#companyId + ':' + #filter + ':' + #fromIso + ':' + #toIso + ':' + (#search != null ? #search : '') + ':' + (#risk != null ? #risk : '')")
+    @Cacheable(value = "admin:sessions", key = "#companyId + ':' + #filter + ':' + #fromIso + ':' + #toIso + ':' + (#search != null ? #search : '') + ':' + (#risk != null ? #risk : '') + ':' + (#sort != null ? #sort : '')")
     @Transactional(readOnly = true)
-    public SessionsListResponseDto buildSessionsList(UUID companyId, String filter, String fromIso, String toIso, String search, String risk) {
+    public SessionsListResponseDto buildSessionsList(UUID companyId, String filter, String fromIso, String toIso, String search, String risk, String sort) {
         DashboardFilterResolver.DateRange range = DashboardFilterResolver.resolve(filter, fromIso, toIso);
         String curStartIso = startOfDayUtcIso(range.from());
         String curEndExcl = startOfDayUtcIso(range.to().plusDays(1));
@@ -95,6 +95,15 @@ public class NewAdminSessionAnalyticsService {
 
             sessions.add(dto);
         }
+
+        // Sort sessions list by startDateTime (newest first or oldest first)
+        boolean newestFirst = !"oldest".equalsIgnoreCase(sort) && !"asc".equalsIgnoreCase(sort);
+        sessions.sort((s1, s2) -> {
+            String t1 = s1.getStartDateTime() != null ? s1.getStartDateTime() : "";
+            String t2 = s2.getStartDateTime() != null ? s2.getStartDateTime() : "";
+            int comp = t1.compareTo(t2);
+            return newestFirst ? -comp : comp;
+        });
 
         return SessionsListResponseDto.builder()
                 .filterId(DashboardFilterResolver.toFilterId(filter))

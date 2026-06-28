@@ -51,9 +51,10 @@ public class AdminAnalyticsController {
             @RequestParam(value = "to", required = false) String to,
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "risk", required = false) String risk,
+            @RequestParam(value = "sort", required = false) String sort,
             @Parameter(hidden = true) Authentication authentication) {
         return executeForCompany(authentication, companyId ->
-                newAdminSessionAnalyticsService.buildSessionsList(companyId, filter, from, to, search, risk));
+                newAdminSessionAnalyticsService.buildSessionsList(companyId, filter, from, to, search, risk, sort));
     }
 
     @Operation(summary = "Session details", description = "Detailed session data and detection logs for a single session.")
@@ -82,9 +83,10 @@ public class AdminAnalyticsController {
             @RequestParam(value = "from", required = false) String from,
             @RequestParam(value = "to", required = false) String to,
             @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "sort", required = false) String sort,
             @Parameter(hidden = true) Authentication authentication) {
         return executeForCompany(authentication, companyId ->
-                newAdminDriversAnalyticsService.buildDriversList(companyId, filter, from, to, search));
+                newAdminDriversAnalyticsService.buildDriversList(companyId, filter, from, to, search, sort));
     }
 
     @Operation(summary = "Driver analytics", description = "Detailed analytics for a single driver within a date range.")

@@ -56,9 +56,9 @@ public class NewAdminDriversAnalyticsService {
         this.userRepository = userRepository;
     }
 
-    @Cacheable(value = "admin:drivers", key = "#companyId + ':' + #filter + ':' + #fromIso + ':' + #toIso + ':' + (#search != null ? #search : '')")
+    @Cacheable(value = "admin:drivers", key = "#companyId + ':' + #filter + ':' + #fromIso + ':' + #toIso + ':' + (#search != null ? #search : '') + ':' + (#sort != null ? #sort : '')")
     @Transactional(readOnly = true)
-    public DriversListResponseDto buildDriversList(UUID companyId, String filter, String fromIso, String toIso, String search) {
+    public DriversListResponseDto buildDriversList(UUID companyId, String filter, String fromIso, String toIso, String search, String sort) {
         DateRange range = DashboardFilterResolver.resolve(filter, fromIso, toIso);
         String curStartIso = startOfDayUtcIso(range.from());
         String curEndExcl = startOfDayUtcIso(range.to().plusDays(1));
@@ -78,10 +78,15 @@ public class NewAdminDriversAnalyticsService {
         Double avgScoreCur = calculatePooledCompanyScore(curMetricsMap.values(), activeCur);
         Double avgScorePrev = calculatePooledCompanyScore(prevMetricsMap.values(), activePrev);
 
-        // 2. Map all drivers using instant O(1) Memory Lookups
+        // 2. Map all drivers using instant O(1) Memory Lookups and track their last session times
         List<DriverSummaryDto> allDrivers = new ArrayList<>();
+        Map<String, String> driverLastSessionTime = new HashMap<>();
         for (Object[] row : repository.findFleetDriversForCompany(companyId, Role.FLEET_DRIVER)) {
-            allDrivers.add(mapDriverRow(row, curMetricsMap));
+            UUID userId = (UUID) row[0];
+            List<String> lastStarts = repository.findLastSessionStartTime(userId, PageRequest.of(0, 1));
+            String rawTime = lastStarts.isEmpty() ? "" : lastStarts.get(0);
+            driverLastSessionTime.put(userId.toString(), rawTime);
+            allDrivers.add(mapDriverRow(row, curMetricsMap, lastStarts));
         }
 
         long highRiskCur = allDrivers.stream().filter(d -> d.getRiskId() == 2).count();
@@ -97,6 +102,20 @@ public class NewAdminDriversAnalyticsService {
             }
             filteredDrivers.add(dto);
         }
+
+        // Sort drivers by raw last session start time (newest first or oldest first), placing "Never" at the bottom
+        boolean newestFirst = !"oldest".equalsIgnoreCase(sort) && !"asc".equalsIgnoreCase(sort);
+        filteredDrivers.sort((d1, d2) -> {
+            String t1 = driverLastSessionTime.getOrDefault(d1.getId(), "");
+            String t2 = driverLastSessionTime.getOrDefault(d2.getId(), "");
+
+            if (t1.isEmpty() && t2.isEmpty()) return 0;
+            if (t1.isEmpty()) return 1;  // Put "Never" at the bottom
+            if (t2.isEmpty()) return -1; // Put "Never" at the bottom
+
+            int comp = t1.compareTo(t2);
+            return newestFirst ? -comp : comp;
+        });
 
         return DriversListResponseDto.builder()
                 .filterId(DashboardFilterResolver.toFilterId(filter))
@@ -287,6 +306,12 @@ public class NewAdminDriversAnalyticsService {
 
     private DriverSummaryDto mapDriverRow(Object[] row, Map<UUID, DensityMetric> metricsMap) {
         UUID userId = (UUID) row[0];
+        List<String> lastStarts = repository.findLastSessionStartTime(userId, PageRequest.of(0, 1));
+        return mapDriverRow(row, metricsMap, lastStarts);
+    }
+
+    private DriverSummaryDto mapDriverRow(Object[] row, Map<UUID, DensityMetric> metricsMap, List<String> lastStarts) {
+        UUID userId = (UUID) row[0];
         String name = (String) row[1];
         String email = (String) row[2];
         UserStatus status = (UserStatus) row[3];
@@ -295,8 +320,6 @@ public class NewAdminDriversAnalyticsService {
         DensityMetric metric = metricsMap.get(userId);
         double rawScore = (metric != null) ? calculateDensityScore(metric) : 100.0;
         int score = (int) Math.round(rawScore);
-
-        List<String> lastStarts = repository.findLastSessionStartTime(userId, PageRequest.of(0, 1));
 
         return DriverSummaryDto.builder()
                 .name(name)

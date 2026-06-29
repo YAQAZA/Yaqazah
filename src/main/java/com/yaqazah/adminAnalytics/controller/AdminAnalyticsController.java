@@ -93,14 +93,16 @@ public class AdminAnalyticsController {
     @PreAuthorize("hasAnyRole('COMPANY_ADMIN', 'ADMIN')")
     @GetMapping("/driver")
     public ResponseEntity<DriverDetailResponseDto> getDriver(
-            @RequestParam("driverId") UUID driverId,
+            @RequestParam("email") String email,
             @RequestParam("filter") String filter,
             @RequestParam(value = "from", required = false) String from,
             @RequestParam(value = "to", required = false) String to,
             @Parameter(hidden = true) Authentication authentication) {
         try {
             UUID companyId = resolveCompanyId(authentication);
-            return newAdminDriversAnalyticsService.buildDriverDetail(companyId, driverId, filter, from, to)
+            User driver = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new IllegalArgumentException("Driver not found"));
+            return newAdminDriversAnalyticsService.buildDriverDetail(companyId, driver.getUserId(), filter, from, to)
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (IllegalArgumentException ex) {

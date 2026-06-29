@@ -308,7 +308,7 @@ public class UserService {
         // 4. Map everything to the DTO
         return CompanyInfoDto.builder()
                 .companyName(company.getName())
-                .companyAddress(company.getAddress())
+//                .companyAddress(company.getAddress())
                 .totalAdmins(totalAdmins)
                 // Note: If your Company entity uses getCreatedAt(), change this to match
                 .companyInsertedAt(company.getInsertedAt())

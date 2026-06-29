@@ -11,7 +11,7 @@ public class RedisTestController {
 
     private final StringRedisTemplate redisTemplate;
 
-    // Spring automatically injects the Redis configuration from your application.yml/.env
+    // Spring automatically injects the Redis configuration from your application.yml/..env
     public RedisTestController(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }

@@ -1,5 +1,6 @@
 package com.yaqazah.user.controller;
 
+import com.yaqazah.user.dto.response.AdminCompanyDashboardDto;
 import com.yaqazah.user.dto.response.CompanyInfoDto;
 import com.yaqazah.user.dto.request.LoginRequestDto;
 import com.yaqazah.user.dto.response.UserProfileResponseDto;
@@ -13,6 +14,7 @@ import org.jspecify.annotations.NullMarked;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -100,4 +102,21 @@ public class UserController {
 
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/admin-dashboard")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COMPANY_ADMIN')")
+    @Operation(
+            summary = "Get Admin Company Dashboard",
+            description = "Returns user profile, company info, and company admins"
+    )
+    public ResponseEntity<AdminCompanyDashboardDto> getAdminDashboard() {
+
+        String email = getCurrentUserEmail();
+
+        AdminCompanyDashboardDto response =
+                userService.getAdminCompanyDashboard(email);
+
+        return ResponseEntity.ok(response);
+    }
+
 }

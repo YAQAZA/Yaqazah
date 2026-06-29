@@ -4,6 +4,7 @@ import com.yaqazah.company.model.Company;
 import com.yaqazah.company.repository.CompanyRepository;
 import com.yaqazah.detection.repository.DetectionLogRepository;
 import com.yaqazah.session.repository.SessionRepository;
+import com.yaqazah.user.dto.response.AdminCompanyDashboardDto;
 import com.yaqazah.user.dto.response.AdminListDto;
 import com.yaqazah.user.dto.response.CompanyInfoDto;
 import com.yaqazah.user.dto.response.UserProfileResponseDto;
@@ -308,13 +309,43 @@ public class UserService {
         // 4. Map everything to the DTO
         return CompanyInfoDto.builder()
                 .companyName(company.getName())
-//                .companyAddress(company.getAddress())
+                .companyAddress(company.getAddress())
                 .totalAdmins(totalAdmins)
                 // Note: If your Company entity uses getCreatedAt(), change this to match
                 .companyInsertedAt(company.getInsertedAt())
 
                 .adminName(primaryAdmin.getFullName())
                 .adminEmail(primaryAdmin.getEmail())
+                .build();
+    }
+
+    public AdminCompanyDashboardDto getAdminCompanyDashboard(String email) {
+
+        User requester = findByEmail(email);
+
+        if (requester.getRole() != Role.ADMIN &&
+                requester.getRole() != Role.COMPANY_ADMIN) {
+
+            throw new IllegalStateException(
+                    "User is not allowed to access this page"
+            );
+        }
+
+
+        CompanyInfoDto company =
+                getCompanyInfo(email);
+
+        List<AdminListDto> admins =
+                getCompanyAdmins(email);
+
+        UserProfileResponseDto user =
+                getUserProfileDto(email);
+
+
+        return AdminCompanyDashboardDto.builder()
+                .company(company)
+                .admins(admins)
+                .user(user)
                 .build();
     }
 }

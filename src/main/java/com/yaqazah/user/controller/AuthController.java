@@ -146,7 +146,6 @@ public class AuthController {
                         :
                         cookie;
 
-
         if (token == null) {
             throw new IllegalArgumentException(
                     "Refresh token missing"

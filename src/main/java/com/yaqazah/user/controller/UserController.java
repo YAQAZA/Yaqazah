@@ -160,4 +160,27 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    //    @GetMapping("/company-admins")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'COMPANY_ADMIN')")
+//    @Operation(summary = "Get All Company Admins", description = "Fetches a list of all admins and company admins belonging to the requester's company.")
+//    public ResponseEntity<List<AdminListDto>> getCompanyAdmins() {
+//        String email = getCurrentUserEmail();
+//        List<AdminListDto> response = userService.getCompanyAdmins(email);
+//
+//        return ResponseEntity.ok(response);
+//    }
+
+//    @GetMapping("/company-info")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'COMPANY_ADMIN', 'FLEET_DRIVER')") // Note: Use hasAnyRole if your DB uses the "ROLE_" prefix
+//    @Operation(summary = "Get Company Overview", description = "Fetches the company details along with the primary owner's info and total admin count.")
+//    public ResponseEntity<CompanyInfoDto> getCompanyInfo() {
+//        // Securely extract the email from the logged-in user's token
+//        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+//
+//        // Fetch the mapped DTO from the service
+//        CompanyInfoDto response = userService.getCompanyInfo(email);
+//
+//        return ResponseEntity.ok(response);
+//    }
+
 }

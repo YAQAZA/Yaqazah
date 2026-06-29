@@ -102,7 +102,7 @@ public class UserController {
 //        return ResponseEntity.ok(response);
 //    }
 
-    @GetMapping("/admin-dashboard")
+    @GetMapping("/admin-view")
     @PreAuthorize("hasAnyRole('ADMIN', 'COMPANY_ADMIN')")
     @Operation(
             summary = "Get Admin Company Dashboard",

@@ -59,6 +59,7 @@ public class UserService {
         response.setGender(user.getGender().name());
         response.setRole(user.getRole().name());
         response.setBirthDate(user.getBirthDate());
+        response.setInsertedAt(user.getInsertedAt());
 
         return response;
     }

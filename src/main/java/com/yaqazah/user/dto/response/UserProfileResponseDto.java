@@ -4,6 +4,7 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Past;
 import lombok.*;
 
+import java.time.Instant;
 import java.time.LocalDate;
 
 @Data
@@ -22,4 +23,5 @@ public class UserProfileResponseDto {
         return birthDate != null &&
                 birthDate.plusYears(18).isBefore(LocalDate.now());
     }
+    private Instant insertedAt;
 }

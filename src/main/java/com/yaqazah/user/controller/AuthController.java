@@ -13,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
@@ -147,9 +148,11 @@ public class AuthController {
 
     @PostMapping("/logout")
     @Operation(summary = "Log the user out and destroy the refresh token")
-    public ResponseEntity<?> logout(@Valid @RequestBody LogoutRequestDto request) {
+    public ResponseEntity<?> logout(Authentication authentication) {
 
-        refreshTokenService.deleteByUserId(request.getEmail());
+        String email = authentication.getName();
+
+        refreshTokenService.deleteByUserId(email);
 
         ResponseCookie clearCookie = ResponseCookie.from("refresh_token", "")
                 .httpOnly(true)

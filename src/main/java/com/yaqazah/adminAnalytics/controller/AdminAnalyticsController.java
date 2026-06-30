@@ -52,9 +52,11 @@ public class AdminAnalyticsController {
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "risk", required = false) String risk,
             @RequestParam(value = "sort", required = false) String sort,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
             @Parameter(hidden = true) Authentication authentication) {
         return executeForCompany(authentication, companyId ->
-                newAdminSessionAnalyticsService.buildSessionsList(companyId, filter, from, to, search, risk, sort));
+                newAdminSessionAnalyticsService.buildSessionsList(companyId, filter, from, to, search, risk, sort, page, size));
     }
 
     @Operation(summary = "Session details", description = "Detailed session data and detection logs for a single session.")

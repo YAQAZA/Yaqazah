@@ -17,4 +17,9 @@ public class SessionsListResponseDto {
     private String timeInterval;
     private List<OverviewStatDto> overviewStats;
     private List<SessionSummaryDto> sessions;
+    private int page;
+    private int size;
+    private long totalElements;
+    private int totalPages;
+    private boolean hasNext;
 }

@@ -38,6 +38,12 @@ public class NewAdminSessionAnalyticsService {
     @Cacheable(value = "admin:sessions", key = "#companyId + ':' + #filter + ':' + #fromIso + ':' + #toIso + ':' + (#search != null ? #search : '') + ':' + (#risk != null ? #risk : '') + ':' + (#sort != null ? #sort : '')")
     @Transactional(readOnly = true)
     public SessionsListResponseDto buildSessionsList(UUID companyId, String filter, String fromIso, String toIso, String search, String risk, String sort) {
+        return buildSessionsList(companyId, filter, fromIso, toIso, search, risk, sort, 0, Integer.MAX_VALUE);
+    }
+
+    @Cacheable(value = "admin:sessions", key = "#companyId + ':' + #filter + ':' + #fromIso + ':' + #toIso + ':' + (#search != null ? #search : '') + ':' + (#risk != null ? #risk : '') + ':' + (#sort != null ? #sort : '') + ':' + #page + ':' + #size")
+    @Transactional(readOnly = true)
+    public SessionsListResponseDto buildSessionsList(UUID companyId, String filter, String fromIso, String toIso, String search, String risk, String sort, int page, int size) {
         DashboardFilterResolver.DateRange range = DashboardFilterResolver.resolve(filter, fromIso, toIso);
         String curStartIso = startOfDayUtcIso(range.from());
         String curEndExcl = startOfDayUtcIso(range.to().plusDays(1));
@@ -105,6 +111,13 @@ public class NewAdminSessionAnalyticsService {
             return newestFirst ? -comp : comp;
         });
 
+        // Apply pagination slice
+        int totalElements = sessions.size();
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+        int start = Math.min(page * size, totalElements);
+        int end = Math.min(start + size, totalElements);
+        List<SessionSummaryDto> paginatedSessions = new ArrayList<>(sessions.subList(start, end));
+
         return SessionsListResponseDto.builder()
                 .filterId(DashboardFilterResolver.toFilterId(filter))
                 .timeInterval(DashboardFilterResolver.formatTimeInterval(range.from(), range.to()))
@@ -113,7 +126,12 @@ public class NewAdminSessionAnalyticsService {
                         overviewStat("Active Drivers", activeCur, activePrev, false),
                         overviewStat("Average Safety Score", avgScoreCur, avgScorePrev, true),
                         overviewStat("Total Alerts", alertsCur, alertsPrev, false)))
-                .sessions(sessions)
+                .sessions(paginatedSessions)
+                .page(page)
+                .size(size)
+                .totalElements(totalElements)
+                .totalPages(totalPages)
+                .hasNext(page < totalPages - 1)
                 .build();
     }
 

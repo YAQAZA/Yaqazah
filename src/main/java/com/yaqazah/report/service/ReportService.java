@@ -196,7 +196,7 @@ public class ReportService {
                             driver.getName(),
                             driver.getId(),
                             driver.getEmail(),
-                            driver.getPhone(),
+//                            driver.getPhone(),
                             driver.getJoinedAt(),
                             driver.getStatus(),
                             driver.getSafetyScore(),

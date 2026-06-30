@@ -15,6 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @JsonPropertyOrder({
         "filterId",
+        "timeInterval",
         "performanceTrend",
         "alertTrendValues",
         "overviewStats",
@@ -22,6 +23,7 @@ import java.util.List;
 })
 public class DriversListResponseDto {
     private String filterId;
+    private String timeInterval;
     private List<OverviewStatDto> overviewStats;
     private List<DriverSummaryDto> drivers;
 }

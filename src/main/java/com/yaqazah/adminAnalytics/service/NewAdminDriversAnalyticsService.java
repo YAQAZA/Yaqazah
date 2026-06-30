@@ -119,6 +119,7 @@ public class NewAdminDriversAnalyticsService {
 
         return DriversListResponseDto.builder()
                 .filterId(DashboardFilterResolver.toFilterId(filter))
+                .timeInterval(DashboardFilterResolver.formatTimeInterval(range.from(), range.to()))
                 .overviewStats(List.of(
                         overviewStat("Total Drivers", totalDrivers, totalDrivers, false),
                         overviewStat("Active Drivers", activeCur, activePrev, false),

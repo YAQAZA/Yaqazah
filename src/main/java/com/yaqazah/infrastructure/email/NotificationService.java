@@ -29,10 +29,10 @@ public class NotificationService {
         checkRateLimitAndSend(email, PREFIX_VERIFY, "Verify your Yaqazah Account", 15);
     }
 
-    @Async
-    public void sendPasswordResetOtp(String email) {
-        checkRateLimitAndSend(email, PREFIX_RESET, "Password Reset Request", 10);
-    }
+//    @Async
+//    public void sendPasswordResetOtp(String email) {
+//        checkRateLimitAndSend(email, PREFIX_RESET, "Password Reset Request", 10);
+//    }
 
     private void checkRateLimitAndSend(String email, String prefix, String subject, int minutes) {
         String limitKey = PREFIX_LIMIT + prefix + email;
@@ -74,9 +74,7 @@ public class NotificationService {
             //3 Link for frontend
             // (Replace "localhost:3000" with your actual frontend URL)
             String frontendResetUrl =
-                    "https://admin-dashboard-91eab.web.app/#/reset-password" +
-                            "?mail=" + URLEncoder.encode(email, StandardCharsets.UTF_8) +
-                            "&otp=" + otp;
+                    "https://admin-dashboard-91eab.web.app/#/reset-password" + "?mail=" + URLEncoder.encode(email, StandardCharsets.UTF_8) + "&otp=" + otp;
             // 4. Send the email
             String subject = "Welcome to Yaqazah! Please set your password";
             String body = "Hello,\n\n" +
@@ -89,6 +87,33 @@ public class NotificationService {
 
         } catch (Exception e) {
             log.error("Failed to send Welcome link to {}: {}", email, e.getMessage());
+        }
+    }
+
+    @Async
+    public void sendPasswordResetEmail(String email) {
+
+        try {
+
+            // 1. Generate OTP token
+            String otp = String.format("%06d", secureRandom.nextInt(1000000));
+            // 2. Store OTP in Redis
+            // Normal reset should expire quickly
+            redisTemplate.opsForValue().set(PREFIX_RESET + email, otp, 10, TimeUnit.MINUTES);
+            // 3. Create frontend reset link
+            String resetUrl = "https://admin-dashboard-91eab.web.app/#/reset-password" + "?mail=" + URLEncoder.encode(email, StandardCharsets.UTF_8) + "&otp=" + otp;
+            // 4. Email content
+            String subject = "Yaqazah Password Reset";
+            String body = "Hello,\n\n" + "We received a request to reset your password.\n\n" + "Click the link below to create a new password:\n\n" + resetUrl + "\n\n" + "This link expires in 10 minutes.\n\n" + "If you did not request this, ignore this email.";
+            // 5. Send email
+            emailService.sendEmail(email, subject, body);
+            log.info("Password reset email sent to {}", email);
+        } catch (Exception e) {
+            log.error(
+                    "Failed to send password reset email to {}: {}",
+                    email,
+                    e.getMessage()
+            );
         }
     }
 }

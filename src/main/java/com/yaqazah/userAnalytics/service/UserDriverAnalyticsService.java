@@ -26,7 +26,7 @@ public class UserDriverAnalyticsService  {
     private static final double K_FACTOR = 0.025;
     private static final double MIN_TRIP_HOURS = 0.0833; // 5-minute threshold
 
-    public enum TrendGranularity { HOURLY, DAILY, MONTHLY }
+    public enum TrendGranularity { HOURLY, DAILY, MONTHLY, YEARLY }
     private record TrendResolution(TrendGranularity granularity, List<String> sqlKeys, List<String> displayLabels) {}
 
     private record DensityMetric(
@@ -180,13 +180,38 @@ public class UserDriverAnalyticsService  {
         List<Object[]> rows = switch (resolution.granularity()) {
             case HOURLY -> repository.findSafetyTrendHourlyForUser(userId, startIso, endIsoExclusive);
             case DAILY -> repository.findSafetyTrendDailyForUser(userId, startIso, endIsoExclusive);
-            case MONTHLY -> repository.findSafetyTrendMonthlyForUser(userId, startIso, endIsoExclusive);
+            case MONTHLY, YEARLY -> repository.findSafetyTrendMonthlyForUser(userId, startIso, endIsoExclusive);
         };
 
         Map<String, TrendBucketMetric> metricMap = new HashMap<>();
-        for (Object[] row : rows) {
-            TrendBucketMetric m = parseTrendRow(row);
-            metricMap.put(m.bucketKey(), m);
+        if (resolution.granularity() == TrendGranularity.YEARLY) {
+            Map<String, List<TrendBucketMetric>> groupedByYear = new HashMap<>();
+            for (Object[] row : rows) {
+                TrendBucketMetric m = parseTrendRow(row);
+                if (m.bucketKey() != null && m.bucketKey().length() >= 4) {
+                    String yearKey = m.bucketKey().substring(0, 4);
+                    groupedByYear.computeIfAbsent(yearKey, k -> new ArrayList<>()).add(m);
+                }
+            }
+            for (Map.Entry<String, List<TrendBucketMetric>> entry : groupedByYear.entrySet()) {
+                String year = entry.getKey();
+                List<TrendBucketMetric> list = entry.getValue();
+                double totalDuration = 0.0;
+                long low = 0, med = 0, high = 0, crit = 0;
+                for (TrendBucketMetric m : list) {
+                    totalDuration += m.durationHours();
+                    low += m.low();
+                    med += m.med();
+                    high += m.high();
+                    crit += m.crit();
+                }
+                metricMap.put(year, new TrendBucketMetric(year, totalDuration, low, med, high, crit));
+            }
+        } else {
+            for (Object[] row : rows) {
+                TrendBucketMetric m = parseTrendRow(row);
+                metricMap.put(m.bucketKey(), m);
+            }
         }
 
         List<Integer> trend = new ArrayList<>(resolution.sqlKeys().size());
@@ -206,17 +231,20 @@ public class UserDriverAnalyticsService  {
         List<Object[]> rows = switch (resolution.granularity()) {
             case HOURLY -> repository.countAlertsAndTypeHourlyForUser(userId, startIso, endIsoExclusive);
             case DAILY -> repository.countAlertsAndTypeDailyForUser(userId, startIso, endIsoExclusive);
-            case MONTHLY -> repository.countAlertsAndTypeMonthlyForUser(userId, startIso, endIsoExclusive);
+            case MONTHLY, YEARLY -> repository.countAlertsAndTypeMonthlyForUser(userId, startIso, endIsoExclusive);
         };
 
         Map<String, Map<Integer, Long>> countMap = new HashMap<>();
         for (Object[] row : rows) {
             String bucketKey = (String) row[0];
+            if (resolution.granularity() == TrendGranularity.YEARLY && bucketKey != null && bucketKey.length() >= 4) {
+                bucketKey = bucketKey.substring(0, 4);
+            }
             int alertId = ((Number) row[1]).intValue();
+            long count = ((Number) row[2]).longValue();
 
             // Trend types: 0=Asleep, 1=Drowsy, 2=Distracted
             if (alertId < 0 || alertId > 2) continue;
-            long count = ((Number) row[2]).longValue();
             countMap.computeIfAbsent(bucketKey, k -> new HashMap<>()).merge(alertId, count, Long::sum);
         }
 
@@ -245,6 +273,14 @@ public class UserDriverAnalyticsService  {
         List<String> sqlKeys = new ArrayList<>();
         List<String> displayLabels = new ArrayList<>();
         long days = ChronoUnit.DAYS.between(from, to) + 1;
+
+        if (from.plusYears(2).isBefore(to)) {
+            for (int y = from.getYear(); y <= to.getYear(); y++) {
+                sqlKeys.add(String.valueOf(y));
+                displayLabels.add(String.valueOf(y));
+            }
+            return new TrendResolution(TrendGranularity.YEARLY, sqlKeys, displayLabels);
+        }
 
         if ("1".equals(filterId) || "2".equals(filterId) || days <= 1) {
             for (int h = 0; h < 24; h++) {

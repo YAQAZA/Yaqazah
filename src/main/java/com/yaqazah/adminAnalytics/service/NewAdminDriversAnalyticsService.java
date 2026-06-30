@@ -39,7 +39,7 @@ public class NewAdminDriversAnalyticsService {
     private static final double K_FACTOR = 0.025;
     private static final double MIN_TRIP_HOURS = 0.0833; // 5-minute threshold
 
-    public enum TrendGranularity { HOURLY, DAILY, MONTHLY }
+    public enum TrendGranularity { HOURLY, DAILY, MONTHLY, YEARLY }
     private record TrendResolution(TrendGranularity granularity, List<String> sqlKeys, List<String> displayLabels) {}
 
     private record DensityMetric(
@@ -344,13 +344,15 @@ public class NewAdminDriversAnalyticsService {
         List<Object[]> rows = switch (resolution.granularity()) {
             case HOURLY -> repository.countDriverAlertsHourly(driverId, startIso, endIsoExclusive);
             case DAILY -> repository.countDriverAlertsDaily(driverId, startIso, endIsoExclusive);
-            case MONTHLY -> repository.countDriverAlertsMonthly(driverId, startIso, endIsoExclusive);
+            case MONTHLY, YEARLY -> repository.countDriverAlertsMonthly(driverId, startIso, endIsoExclusive);
         };
 
-        // rows: [bucketKey, alertId, count] — alertId is now an int, 0-5 for real alerts
         Map<String, Map<Integer, Long>> countMap = new HashMap<>();
         for (Object[] row : rows) {
             String bucketKey = (String) row[0];
+            if (resolution.granularity() == TrendGranularity.YEARLY && bucketKey != null && bucketKey.length() >= 4) {
+                bucketKey = bucketKey.substring(0, 4);
+            }
             int alertId = ((Number) row[1]).intValue();
 
             // Trend types: 0=Asleep, 1=Drowsy, 2=Distracted
@@ -521,6 +523,7 @@ public class NewAdminDriversAnalyticsService {
             case HOURLY -> isoTimestamp.length() >= 13 ? isoTimestamp.substring(0, 13) : isoTimestamp;
             case DAILY -> isoTimestamp.length() >= 10 ? isoTimestamp.substring(0, 10) : isoTimestamp;
             case MONTHLY -> isoTimestamp.length() >= 7 ? isoTimestamp.substring(0, 7) : isoTimestamp;
+            case YEARLY -> isoTimestamp.length() >= 4 ? isoTimestamp.substring(0, 4) : isoTimestamp;
         };
     }
 
@@ -528,6 +531,14 @@ public class NewAdminDriversAnalyticsService {
         List<String> sqlKeys = new ArrayList<>();
         List<String> displayLabels = new ArrayList<>();
         long days = ChronoUnit.DAYS.between(from, to) + 1;
+
+        if (from.plusYears(2).isBefore(to)) {
+            for (int y = from.getYear(); y <= to.getYear(); y++) {
+                sqlKeys.add(String.valueOf(y));
+                displayLabels.add(String.valueOf(y));
+            }
+            return new TrendResolution(TrendGranularity.YEARLY, sqlKeys, displayLabels);
+        }
 
         if ("1".equals(filterId) || "2".equals(filterId) || days <= 1) {
             for (int h = 0; h < 24; h++) {

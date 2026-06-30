@@ -45,7 +45,7 @@ public final class DashboardFilterResolver {
     public static DateRange resolve(String filter, String fromIso, String toIso) {
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         return switch (normalizeFilterInput(filter)) {
-            case "all" -> new DateRange(LocalDate.of(2000, 1, 1), today);
+            case "all" -> new DateRange(LocalDate.of(2025, 1, 1), today);
             case "today" -> new DateRange(today, today);
             case "yesterday" -> {
                 LocalDate yesterday = today.minusDays(1);

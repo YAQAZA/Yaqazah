@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class NewDashboardService {
 
     public enum TrendGranularity {
-        HOURLY, DAILY, MONTHLY
+        HOURLY, DAILY, MONTHLY, YEARLY
     }
 
     private static final DateTimeFormatter TREND_DAY_KEY = DateTimeFormatter.ISO_LOCAL_DATE;
@@ -231,18 +231,18 @@ public class NewDashboardService {
         List<Object[]> rows = switch (resolution.granularity()) {
             case HOURLY -> dashboardRepository.countAlertsHourly(companyId, startIso, endIsoExclusive);
             case DAILY -> dashboardRepository.countAlertsDaily(companyId, startIso, endIsoExclusive);
-            case MONTHLY -> dashboardRepository.countAlertsMonthly(companyId, startIso, endIsoExclusive);
+            case MONTHLY, YEARLY -> dashboardRepository.countAlertsMonthly(companyId, startIso, endIsoExclusive);
         };
 
         Map<String, Map<Integer, Long>> countMap = new HashMap<>();
         for (Object[] row : rows) {
             String bucketKey = (String) row[0];
+            if (resolution.granularity() == TrendGranularity.YEARLY && bucketKey != null && bucketKey.length() >= 4) {
+                bucketKey = bucketKey.substring(0, 4);
+            }
             int alertId = ((Number) row[1]).intValue();
-
-            // Trend types: 0=Asleep, 1=Drowsy, 2=Distracted
-            if (alertId < 0 || alertId > 2) continue;
-
             long count = ((Number) row[2]).longValue();
+            if (alertId < 0 || alertId > 2) continue;
             countMap.computeIfAbsent(bucketKey, k -> new HashMap<>())
                     .merge(alertId, count, Long::sum);
         }
@@ -445,6 +445,14 @@ public class NewDashboardService {
         List<String> sqlKeys = new ArrayList<>();
         List<String> displayLabels = new ArrayList<>();
         long days = ChronoUnit.DAYS.between(from, to) + 1;
+
+        if (from.plusYears(2).isBefore(to)) {
+            for (int y = from.getYear(); y <= to.getYear(); y++) {
+                sqlKeys.add(String.valueOf(y));
+                displayLabels.add(String.valueOf(y));
+            }
+            return new TrendResolution(TrendGranularity.YEARLY, sqlKeys, displayLabels);
+        }
 
         if ("1".equals(filterId) || "2".equals(filterId) || days <= 1) {
             for (int h = 0; h < 24; h++) {

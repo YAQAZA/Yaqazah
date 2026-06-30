@@ -213,7 +213,7 @@ public class AuthService {
 
     public void requestPasswordReset(ForgotPasswordDto req) {
         if (userRepository.existsByEmail(req.getEmail())) {
-            notificationService.sendPasswordResetOtp(req.getEmail());
+            notificationService.sendPasswordResetEmail(req.getEmail());
         }
     }
 

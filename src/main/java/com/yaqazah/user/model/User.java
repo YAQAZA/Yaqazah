@@ -35,9 +35,11 @@ public class User {
     @Column(nullable = false)
     private String fullName;
 
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
@@ -54,6 +56,7 @@ public class User {
     @Column(nullable = false, updatable = false)
     private Instant insertedAt;
 
+    @Column(nullable = false)
     private LocalDate birthDate;
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean isDeleted = false;

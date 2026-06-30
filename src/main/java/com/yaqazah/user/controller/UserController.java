@@ -140,23 +140,12 @@ public class UserController {
     }
 
     @GetMapping("/admin-view")
-    @PreAuthorize(
-            "hasAnyRole('ADMIN','COMPANY_ADMIN')"
-    )
-    @Operation(
-            summary = "Get Admin Company Dashboard",
-            description =
-                    "Returns profile, company info and admins"
-    )
+    @PreAuthorize("hasAnyRole('ADMIN','COMPANY_ADMIN')")
+    @Operation(summary = "Get Admin Company Dashboard",
+            description = "Returns profile, company info and admins")
     public ResponseEntity<AdminCompanyDashboardDto> getAdminDashboard() {
 
-
-        AdminCompanyDashboardDto response =
-                userService.getAdminCompanyDashboard(
-                        getCurrentUserEmail()
-                );
-
-
+        AdminCompanyDashboardDto response = userService.getAdminCompanyDashboard(getCurrentUserEmail());
         return ResponseEntity.ok(response);
     }
 

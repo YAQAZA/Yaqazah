@@ -19,4 +19,7 @@ public class SessionSummaryDto {
     private int safetyScore;
     private int alertsNumber;
     private int riskId;
+    private int distractionCount; //add
+    private int drowsyCount; //add
+    private int sleepCount; //add
 }

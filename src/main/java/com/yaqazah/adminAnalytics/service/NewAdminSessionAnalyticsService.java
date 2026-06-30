@@ -253,6 +253,9 @@ public class NewAdminSessionAnalyticsService {
         String startTime = (String) row[3];
         float hours = row[5] == null ? 0f : ((Number) row[5]).floatValue();
         int alerts = row[6] == null ? 0 : ((Number) row[6]).intValue();
+        int distraction = row[7] == null ? 0 : ((Number) row[7]).intValue();
+        int drowsy = row[8] == null ? 0 : ((Number) row[8]).intValue();
+        int sleep = row[9] == null ? 0 : ((Number) row[9]).intValue();
 
         DensityMetric metric = metricsMap.get(sessionId);
         double rawScore = (metric != null) ? calculateDensityScore(metric) : 100.0;
@@ -267,6 +270,9 @@ public class NewAdminSessionAnalyticsService {
                 .safetyScore(score)
                 .alertsNumber(alerts)
                 .riskId(riskLevel(score))
+                .distractionCount(distraction)
+                .drowsyCount(drowsy)
+                .sleepCount(sleep)
                 .build();
     }
 

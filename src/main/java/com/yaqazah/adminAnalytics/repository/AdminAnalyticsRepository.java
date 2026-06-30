@@ -15,13 +15,18 @@ import java.util.UUID;
 public interface AdminAnalyticsRepository extends JpaRepository<DetectionLog, UUID> {
 
         @Query("""
-                        select s.sessionId, u.fullName, u.userId, s.startDateTime, s.endDateTime, s.durationHours, s.totalAlerts
+                        select s.sessionId, u.fullName, u.userId, s.startDateTime, s.endDateTime, s.durationHours, s.totalAlerts,
+                               sum(case when d.alertId = 2 then 1 else 0 end),
+                               sum(case when d.alertId = 1 then 1 else 0 end),
+                               sum(case when d.alertId = 0 then 1 else 0 end)
                         from Session s
                         join User u on s.userId = u.userId
+                        left join DetectionLog d on d.session.sessionId = s.sessionId
                         where u.company.companyId = :companyId
                           and u.role = :driverRole
                           and s.startDateTime >= :startIso
                           and s.startDateTime < :endIsoExclusive
+                        group by s.sessionId, u.fullName, u.userId, s.startDateTime, s.endDateTime, s.durationHours, s.totalAlerts
                         order by s.startDateTime desc
                         """)
         List<Object[]> findSessionsForCompanyInPeriod(
@@ -100,11 +105,16 @@ public interface AdminAnalyticsRepository extends JpaRepository<DetectionLog, UU
 
 
         @Query("""
-                        select s.sessionId, s.startDateTime, s.durationHours, s.totalAlerts
+                        select s.sessionId, s.startDateTime, s.durationHours, s.totalAlerts,
+                               sum(case when d.alertId = 2 then 1 else 0 end),
+                               sum(case when d.alertId = 1 then 1 else 0 end),
+                               sum(case when d.alertId = 0 then 1 else 0 end)
                         from Session s
+                        left join DetectionLog d on d.session.sessionId = s.sessionId
                         where s.userId = :driverId
                           and s.startDateTime >= :startIso
                           and s.startDateTime < :endIsoExclusive
+                        group by s.sessionId, s.startDateTime, s.durationHours, s.totalAlerts
                         order by s.startDateTime desc
                         """)
         List<Object[]> findSessionsForDriverInPeriod(

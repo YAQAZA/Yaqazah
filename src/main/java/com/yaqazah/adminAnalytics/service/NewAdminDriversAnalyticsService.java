@@ -176,6 +176,9 @@ public class NewAdminDriversAnalyticsService {
             String rawStartTimeIso = (String) row[1];
             float hours = row[2] == null ? 0f : ((Number) row[2]).floatValue();
             int alerts = row[3] == null ? 0 : ((Number) row[3]).intValue();
+            int distraction = row[4] == null ? 0 : ((Number) row[4]).intValue();
+            int drowsy = row[5] == null ? 0 : ((Number) row[5]).intValue();
+            int sleep = row[6] == null ? 0 : ((Number) row[6]).intValue();
 
             int score = (int) Math.round(sessionSafetyScore(sid));
 
@@ -188,6 +191,9 @@ public class NewAdminDriversAnalyticsService {
                     .safetyScore(score)
                     .alertsNumber(alerts)
                     .riskId(riskLevel(score))
+                    .distractionCount(distraction)
+                    .drowsyCount(drowsy)
+                    .sleepCount(sleep)
                     .build());
 
             String bucketKey = formatTimestampToBucketKey(rawStartTimeIso, resolution.granularity());

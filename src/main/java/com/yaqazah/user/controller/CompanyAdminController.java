@@ -41,20 +41,17 @@ public class CompanyAdminController {
 
 
 
-    @PostMapping("/add")
-    public ResponseEntity<String> add(
-            @Valid @RequestBody FleetDriverDto dto
-    ){
-
-        service.addFleetDriver(dto,email());
-
-        return ResponseEntity.ok(
-                "Driver added"
-        );
-    }
-
-
-
+//    @PostMapping("/add")
+//    public ResponseEntity<String> add(
+//            @Valid @RequestBody FleetDriverDto dto
+//    ){
+//
+//        service.addFleetDriver(dto,email());
+//
+//        return ResponseEntity.ok(
+//                "Driver added"
+//        );
+//    }
 
 
     @PutMapping("/edit/{id}")

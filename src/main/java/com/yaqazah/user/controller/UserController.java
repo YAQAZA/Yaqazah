@@ -1,5 +1,6 @@
 package com.yaqazah.user.controller;
 
+import com.yaqazah.user.dto.request.FleetDriverDto;
 import com.yaqazah.user.dto.request.LoginRequestDto;
 import com.yaqazah.user.dto.response.AdminCompanyDashboardDto;
 import com.yaqazah.user.dto.response.UserProfileResponseDto;
@@ -7,6 +8,7 @@ import com.yaqazah.user.model.User;
 import com.yaqazah.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.http.ResponseEntity;
@@ -147,6 +149,17 @@ public class UserController {
 
         AdminCompanyDashboardDto response = userService.getAdminCompanyDashboard(getCurrentUserEmail());
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/add")
+    @PreAuthorize("hasAnyRole('ADMIN','COMPANY_ADMIN')")
+    @Operation(summary = "Add fleet driver")
+    public ResponseEntity<String> addFleetDriver(
+            @Valid @RequestBody FleetDriverDto request
+    ) {
+        userService.addFleetDriver(request, getCurrentUserEmail());
+
+        return ResponseEntity.ok("Fleet driver added successfully");
     }
 
     //    @GetMapping("/company-admins")

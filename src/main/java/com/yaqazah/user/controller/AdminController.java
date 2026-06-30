@@ -73,22 +73,22 @@ public class AdminController {
         );
     }
 
-    @PostMapping("/add")
-    @Operation(summary = "Add fleet driver")
-    public ResponseEntity<String> addFleetDriver(
-            @Valid @RequestBody FleetDriverDto request
-    ) {
-
-        adminService.addFleetDriver(
-                request,
-                getCurrentAdminEmail()
-        );
-
-
-        return ResponseEntity.ok(
-                "Fleet driver added successfully"
-        );
-    }
+//    @PostMapping("/add")
+//    @Operation(summary = "Add fleet driver")
+//    public ResponseEntity<String> addFleetDriver(
+//            @Valid @RequestBody FleetDriverDto request
+//    ) {
+//
+//        adminService.addFleetDriver(
+//                request,
+//                getCurrentAdminEmail()
+//        );
+//
+//
+//        return ResponseEntity.ok(
+//                "Fleet driver added successfully"
+//        );
+//    }
 
     @DeleteMapping("/{userId}")
     @Operation(summary = "Delete user by id")

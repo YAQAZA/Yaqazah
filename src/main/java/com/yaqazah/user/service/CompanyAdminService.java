@@ -25,32 +25,32 @@ public class CompanyAdminService {
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
 
-    @Transactional
-    public void addFleetDriver(FleetDriverDto req, String adminEmail) {
-        if (userRepository.findByEmail(req.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("Email is already taken!");
-        }
-
-        User loggedInAdmin = userRepository.findByEmail(adminEmail)
-                .orElseThrow(() -> new IllegalStateException("Admin user not found."));
-
-        // Map DTO to User
-        User newDriver = new User();
-        newDriver.setEmail(req.getEmail());
-        newDriver.setFullName(req.getFullName());
-        newDriver.setGender(req.getGender());
-        newDriver.setRole(Role.FLEET_DRIVER);
-        newDriver.setCompany(loggedInAdmin.getCompany());
-        newDriver.setBirthDate(req.getBirthDate());
-
-        String rawTempPassword = PasswordGeneratorUtil.generateCompliantPassword();
-        newDriver.setPasswordHash(passwordEncoder.encode(rawTempPassword));
-
-        newDriver.setStatus(UserStatus.ACTIVE);
-
-        userRepository.save(newDriver);
-        notificationService.sendWelcomePasswordSetEmail(newDriver.getEmail());
-    }
+//    @Transactional
+//    public void addFleetDriver(FleetDriverDto req, String adminEmail) {
+//        if (userRepository.findByEmail(req.getEmail()).isPresent()) {
+//            throw new IllegalArgumentException("Email is already taken!");
+//        }
+//
+//        User loggedInAdmin = userRepository.findByEmail(adminEmail)
+//                .orElseThrow(() -> new IllegalStateException("Admin user not found."));
+//
+//        // Map DTO to User
+//        User newDriver = new User();
+//        newDriver.setEmail(req.getEmail());
+//        newDriver.setFullName(req.getFullName());
+//        newDriver.setGender(req.getGender());
+//        newDriver.setRole(Role.FLEET_DRIVER);
+//        newDriver.setCompany(loggedInAdmin.getCompany());
+//        newDriver.setBirthDate(req.getBirthDate());
+//
+//        String rawTempPassword = PasswordGeneratorUtil.generateCompliantPassword();
+//        newDriver.setPasswordHash(passwordEncoder.encode(rawTempPassword));
+//
+//        newDriver.setStatus(UserStatus.ACTIVE);
+//
+//        userRepository.save(newDriver);
+//        notificationService.sendWelcomePasswordSetEmail(newDriver.getEmail());
+//    }
 
     @Transactional
     public void updateFleetDriver(UUID driverId, UpdateFleetDriverDto updatedData, String adminEmail) {

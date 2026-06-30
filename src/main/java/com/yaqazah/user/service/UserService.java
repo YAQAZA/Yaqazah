@@ -1,15 +1,19 @@
 package com.yaqazah.user.service;
 
+import com.yaqazah.common.util.PasswordGeneratorUtil;
 import com.yaqazah.company.model.Company;
 import com.yaqazah.company.repository.CompanyRepository;
 import com.yaqazah.detection.repository.DetectionLogRepository;
+import com.yaqazah.infrastructure.email.NotificationService;
 import com.yaqazah.session.repository.SessionRepository;
+import com.yaqazah.user.dto.request.FleetDriverDto;
 import com.yaqazah.user.dto.response.AdminCompanyDashboardDto;
 import com.yaqazah.user.dto.response.AdminListDto;
 import com.yaqazah.user.dto.response.CompanyInfoDto;
 import com.yaqazah.user.dto.response.UserProfileResponseDto;
 import com.yaqazah.user.model.Role;
 import com.yaqazah.user.model.User;
+import com.yaqazah.user.model.UserStatus;
 import com.yaqazah.user.repository.RefreshTokenRepository;
 import com.yaqazah.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +37,7 @@ public class UserService {
     private final DetectionLogRepository detectionLogRepository;
     private final SessionRepository sessionRepository;
     private final PasswordEncoder passwordEncoder;
+    private final NotificationService notificationService;
 
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
@@ -256,6 +261,34 @@ public class UserService {
     // ========================================================================
     // GET COMPANY ADMINS
     // ========================================================================
+
+    @Transactional
+    public void addFleetDriver(FleetDriverDto req, String adminEmail) {
+        if (userRepository.findByEmail(req.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email is already taken!");
+        }
+
+        User loggedInAdmin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new IllegalStateException("Admin user not found."));
+
+        // Map DTO to User
+        User newDriver = new User();
+        newDriver.setEmail(req.getEmail());
+        newDriver.setFullName(req.getFullName());
+        newDriver.setGender(req.getGender());
+        newDriver.setRole(Role.FLEET_DRIVER);
+        newDriver.setCompany(loggedInAdmin.getCompany());
+        newDriver.setBirthDate(req.getBirthDate());
+
+        String rawTempPassword = PasswordGeneratorUtil.generateCompliantPassword();
+        newDriver.setPasswordHash(passwordEncoder.encode(rawTempPassword));
+
+        newDriver.setStatus(UserStatus.ACTIVE);
+
+        userRepository.save(newDriver);
+        notificationService.sendWelcomePasswordSetEmail(newDriver.getEmail());
+    }
+
     public List<AdminListDto> getCompanyAdmins(String requesterEmail) {
         User requester = findByEmail(requesterEmail);
 

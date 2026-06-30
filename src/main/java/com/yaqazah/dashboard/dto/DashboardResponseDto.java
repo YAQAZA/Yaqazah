@@ -15,6 +15,7 @@ import java.util.List;
 
 @JsonPropertyOrder({
         "filterId",
+        "timeInterval",
         "overviewStats",
         "trendLabels",
         "alertTrendValues",
@@ -25,6 +26,7 @@ import java.util.List;
 })
 public class DashboardResponseDto {
     private String filterId;
+    private String timeInterval;
     private List<OverviewStatDto> overviewStats;
     private List<AlertTrendValueDto> alertTrendValues;
     private List<PieDistributionDto> pieDistribution;

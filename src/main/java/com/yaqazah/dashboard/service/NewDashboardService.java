@@ -45,14 +45,14 @@ public class NewDashboardService {
     private record TrendResolution(
             TrendGranularity granularity,
             List<String> sqlKeys,
-            List<String> displayLabels
-    ) {}
+            List<String> displayLabels) {
+    }
 
     private record DensityMetric(
             UUID entityId,
             double durationHours,
-            long low, long medium, long high, long critical
-    ) {}
+            long low, long medium, long high, long critical) {
+    }
 
     private final DashboardRepository dashboardRepository;
 
@@ -82,14 +82,14 @@ public class NewDashboardService {
 
         // 2. Pass it to the trend builder
         List<AlertTrendValueDto> alertTrendValues = buildAlertTrendValues(
-                companyId, curStartIso, curEndExcl, resolution
-        );
+                companyId, curStartIso, curEndExcl, resolution);
 
         long sessionsCur = dashboardRepository.countSessions(companyId, Role.FLEET_DRIVER, curStartIso, curEndExcl);
         long sessionsPrev = dashboardRepository.countSessions(companyId, Role.FLEET_DRIVER, prevStartIso, prevEndExcl);
 
         long activeCur = dashboardRepository.countActiveDrivers(companyId, Role.FLEET_DRIVER, curStartIso, curEndExcl);
-        long activePrev = dashboardRepository.countActiveDrivers(companyId, Role.FLEET_DRIVER, prevStartIso, prevEndExcl);
+        long activePrev = dashboardRepository.countActiveDrivers(companyId, Role.FLEET_DRIVER, prevStartIso,
+                prevEndExcl);
 
         long alertsCur = dashboardRepository.countTotalAlerts(companyId, curStartIso, curEndExcl);
         long alertsPrev = dashboardRepository.countTotalAlerts(companyId, prevStartIso, prevEndExcl);
@@ -101,8 +101,7 @@ public class NewDashboardService {
                 overviewStat("Total Sessions", sessionsCur, sessionsPrev, false),
                 overviewStat("Active Drivers", activeCur, activePrev, false),
                 overviewStat("Average Safety Score", avgScoreCur, avgScorePrev, true),
-                overviewStat("Total Alerts", alertsCur, alertsPrev, false)
-        );
+                overviewStat("Total Alerts", alertsCur, alertsPrev, false));
 
         List<PieDistributionDto> pieDistribution = buildPieDistribution(companyId, curStartIso, curEndExcl);
         List<RiskDistributionDto> riskDistribution = buildRiskDistribution(companyId, curStartIso, curEndExcl);
@@ -111,6 +110,7 @@ public class NewDashboardService {
 
         return DashboardResponseDto.builder()
                 .filterId(DashboardFilterResolver.toFilterId(filter))
+                .timeInterval(DashboardFilterResolver.formatTimeInterval(fromDate, toDate))
                 .overviewStats(overviewStats)
                 .alertTrendValues(alertTrendValues)
                 .pieDistribution(pieDistribution)
@@ -122,7 +122,8 @@ public class NewDashboardService {
     }
 
     private OverviewStatDto overviewStat(String label, Double current, Double previous, boolean asPercent) {
-        String deltaStr = (current == null || previous == null) ? "N/A" : formatDeltaPercent(deltaPercent(current, previous));
+        String deltaStr = (current == null || previous == null) ? "N/A"
+                : formatDeltaPercent(deltaPercent(current, previous));
         return OverviewStatDto.builder()
                 .label(label)
                 .value(formatOverviewValue(current, asPercent))
@@ -169,7 +170,7 @@ public class NewDashboardService {
         long inclusiveDays = ChronoUnit.DAYS.between(fromDate, toDate) + 1;
         LocalDate previousEnd = fromDate.minusDays(1);
         LocalDate previousStart = previousEnd.minusDays(inclusiveDays - 1);
-        return new LocalDate[]{previousStart, previousEnd};
+        return new LocalDate[] { previousStart, previousEnd };
     }
 
     private String startOfDayUtcIso(LocalDate day) {
@@ -194,16 +195,15 @@ public class NewDashboardService {
                 row[2] == null ? 0L : ((Number) row[2]).longValue(),
                 row[3] == null ? 0L : ((Number) row[3]).longValue(),
                 row[4] == null ? 0L : ((Number) row[4]).longValue(),
-                row[5] == null ? 0L : ((Number) row[5]).longValue()
-        );
+                row[5] == null ? 0L : ((Number) row[5]).longValue());
     }
 
     private Double companyAverageSafetyScore(UUID companyId, String startIso, String endIsoExclusive) {
         List<Object[]> rows = dashboardRepository.findDriverSafetyDensityMetrics(
-                companyId, Role.FLEET_DRIVER.name(), startIso, endIsoExclusive
-        );
+                companyId, Role.FLEET_DRIVER.name(), startIso, endIsoExclusive);
 
-        if (rows.isEmpty()) return 100.0;
+        if (rows.isEmpty())
+            return 100.0;
 
         double pooledHours = 0.0;
         long pooledLow = 0, pooledMed = 0, pooledHigh = 0, pooledCrit = 0;
@@ -217,7 +217,8 @@ public class NewDashboardService {
             pooledCrit += m.critical();
         }
 
-        if (pooledHours <= 0) return 100.0;
+        if (pooledHours <= 0)
+            return 100.0;
 
         return calculateDensityScore(pooledLow, pooledMed, pooledHigh, pooledCrit, pooledHours);
     }
@@ -242,7 +243,8 @@ public class NewDashboardService {
             }
             int alertId = ((Number) row[1]).intValue();
             long count = ((Number) row[2]).longValue();
-            if (alertId < 0 || alertId > 2) continue;
+            if (alertId < 0 || alertId > 2)
+                continue;
             countMap.computeIfAbsent(bucketKey, k -> new HashMap<>())
                     .merge(alertId, count, Long::sum);
         }
@@ -281,7 +283,8 @@ public class NewDashboardService {
         long totalAlerts = 0;
 
         for (Object[] row : dashboardRepository.countAlertsByType(companyId, startIso, endIsoExclusive)) {
-            if (row[0] == null || row[1] == null) continue; // Defensive null guard
+            if (row[0] == null || row[1] == null)
+                continue; // Defensive null guard
 
             int alertId = ((Number) row[0]).intValue();
             long count = ((Number) row[1]).longValue();
@@ -299,7 +302,8 @@ public class NewDashboardService {
         List<PieDistributionDto> slices = new ArrayList<>();
         for (int id = 3; id <= 5; id++) {
             long count = countsById[id];
-            if (count == 0) continue;
+            if (count == 0)
+                continue;
 
             int percent = (int) Math.round((count * 100.0) / totalAlerts);
             slices.add(PieDistributionDto.builder()
@@ -312,9 +316,8 @@ public class NewDashboardService {
     }
 
     private List<RiskDistributionDto> buildRiskDistribution(UUID companyId, String startIso, String endIsoExclusive) {
-        List<Object[]> rows = dashboardRepository.findDriverSafetyDensityMetrics(
-                companyId, Role.FLEET_DRIVER.name(), startIso, endIsoExclusive
-        );
+        List<Object[]> rows = dashboardRepository.findSessionSafetyDensityMetrics(
+                companyId, Role.FLEET_DRIVER.name(), startIso, endIsoExclusive);
 
         long[] bucketCounts = new long[3];
 
@@ -324,23 +327,26 @@ public class NewDashboardService {
             bucketCounts[riskLevel(score)]++;
         }
 
-        long totalActive = dashboardRepository.countActiveDrivers(companyId, Role.FLEET_DRIVER, startIso, endIsoExclusive);
-        long driversWithoutSessions = Math.max(0, totalActive - rows.size());
-        bucketCounts[0] += driversWithoutSessions;
+        long totalSessions = rows.size();
 
         List<RiskDistributionDto> out = new ArrayList<>();
         for (int level = 0; level < 3; level++) {
+            double percent = totalSessions == 0
+                    ? 0.0
+                    : Math.round((bucketCounts[level] * 100.0) / totalSessions * 100) / 100.0; // round to 2 dp
             out.add(RiskDistributionDto.builder()
                     .id(level)
-                    .value(bucketCounts[level])
+                    .value((long) percent) //This is the percent of risk level, not the count of sessions
                     .build());
         }
         return out;
     }
 
     private int riskLevel(double score) {
-        if (score > 90.0) return 0;
-        if (score >= 70.0) return 1;
+        if (score > 90.0)
+            return 0;
+        if (score >= 70.0)
+            return 1;
         return 2;
     }
 
@@ -383,19 +389,21 @@ public class NewDashboardService {
 
     private List<TopPerformerDto> buildTopPerformers(UUID companyId, String startIso, String endIsoExclusive) {
         List<Object[]> rows = dashboardRepository.findDriverSafetyDensityMetrics(
-                companyId, Role.FLEET_DRIVER.name(), startIso, endIsoExclusive
-        );
+                companyId, Role.FLEET_DRIVER.name(), startIso, endIsoExclusive);
 
-        if (rows.isEmpty()) return List.of();
+        if (rows.isEmpty())
+            return List.of();
 
         Map<UUID, Long> sessionsByDriver = sessionsByDriver(companyId, startIso, endIsoExclusive);
 
-        record EvaluatedDriver(UUID userId, double score, double hoursDriven) {}
+        record EvaluatedDriver(UUID userId, double score, double hoursDriven) {
+        }
 
         List<EvaluatedDriver> rankings = new ArrayList<>();
         for (Object[] row : rows) {
             DensityMetric m = parseMetricRow(row);
-            int score = (int) Math.round(calculateDensityScore(m.low(), m.medium(), m.high(), m.critical(), m.durationHours()));
+            int score = (int) Math
+                    .round(calculateDensityScore(m.low(), m.medium(), m.high(), m.critical(), m.durationHours()));
             rankings.add(new EvaluatedDriver(m.entityId(), score, m.durationHours()));
         }
 

@@ -38,6 +38,12 @@ public class NewUserAnalyticsService {
     @Cacheable(value = "user:sessions", key = "#userId + ':' + #filter + ':' + #fromIso + ':' + #toIso")
     @Transactional(readOnly = true)
     public SessionsListResponseDto buildSessionsList(UUID userId, String filter, String fromIso, String toIso) {
+        return buildSessionsList(userId, filter, fromIso, toIso, 0, Integer.MAX_VALUE);
+    }
+
+    @Cacheable(value = "user:sessions", key = "#userId + ':' + #filter + ':' + #fromIso + ':' + #toIso + ':' + #page + ':' + #size")
+    @Transactional(readOnly = true)
+    public SessionsListResponseDto buildSessionsList(UUID userId, String filter, String fromIso, String toIso, int page, int size) {
         DashboardFilterResolver.DateRange range = DashboardFilterResolver.resolve(filter, fromIso, toIso);
         String curStartIso = startOfDayUtcIso(range.from());
         String curEndExcl = startOfDayUtcIso(range.to().plusDays(1));
@@ -66,6 +72,13 @@ public class NewUserAnalyticsService {
             sessions.add(mapSessionRow(row, curMetricsMap));
         }
 
+        // Apply pagination slice
+        int totalElements = sessions.size();
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+        int start = Math.min(page * size, totalElements);
+        int end = Math.min(start + size, totalElements);
+        List<SessionSummaryDto> paginatedSessions = new ArrayList<>(sessions.subList(start, end));
+
         return SessionsListResponseDto.builder()
                 .filterId(DashboardFilterResolver.toFilterId(filter))
                 .timeInterval(DashboardFilterResolver.formatTimeInterval(range.from(), range.to()))
@@ -73,7 +86,12 @@ public class NewUserAnalyticsService {
                         overviewStat("Total Sessions", sessionsCur, sessionsPrev, false),
                         overviewStat("Average Safety Score", avgScoreCur, avgScorePrev, true),
                         overviewStat("Total Alerts", alertsCur, alertsPrev, false)))
-                .sessions(sessions)
+                .sessions(paginatedSessions)
+                .page(page)
+                .size(size)
+                .totalElements(totalElements)
+                .totalPages(totalPages)
+                .hasNext(page < totalPages - 1)
                 .build();
     }
 

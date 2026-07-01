@@ -15,6 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
+
 
 import java.util.UUID;
 
@@ -29,6 +32,16 @@ public class AdminService {
     private final UserService userService;
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "dashboard",              allEntries = true),
+            @CacheEvict(value = "admin:sessions",         allEntries = true),
+            @CacheEvict(value = "admin:session-detail",   allEntries = true),
+            @CacheEvict(value = "admin:drivers",          allEntries = true),
+            @CacheEvict(value = "admin:driver-detail",    allEntries = true),
+            @CacheEvict(value = "user:analytics",         allEntries = true),
+            @CacheEvict(value = "user:sessions",          allEntries = true),
+            @CacheEvict(value = "user:session-detail",    allEntries = true)
+    })
     public void registerCompanyOwner(CompanyOwnerRegistrationDto req) {
         // 1. Validate email first
         if (userRepository.findByEmail(req.getAdminEmail()).isPresent()) {
@@ -58,6 +71,16 @@ public class AdminService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "dashboard",              allEntries = true),
+            @CacheEvict(value = "admin:sessions",         allEntries = true),
+            @CacheEvict(value = "admin:session-detail",   allEntries = true),
+            @CacheEvict(value = "admin:drivers",          allEntries = true),
+            @CacheEvict(value = "admin:driver-detail",    allEntries = true),
+            @CacheEvict(value = "user:analytics",         allEntries = true),
+            @CacheEvict(value = "user:sessions",          allEntries = true),
+            @CacheEvict(value = "user:session-detail",    allEntries = true)
+    })
     public void addCompanyAdmin(CompanyAdminDto req, String adminEmail) {
         if (userRepository.findByEmail(req.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email is already taken!");
@@ -113,6 +136,16 @@ public class AdminService {
 //    }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "dashboard",              allEntries = true),
+            @CacheEvict(value = "admin:sessions",         allEntries = true),
+            @CacheEvict(value = "admin:session-detail",   allEntries = true),
+            @CacheEvict(value = "admin:drivers",          allEntries = true),
+            @CacheEvict(value = "admin:driver-detail",    allEntries = true),
+            @CacheEvict(value = "user:analytics",         allEntries = true),
+            @CacheEvict(value = "user:sessions",          allEntries = true),
+            @CacheEvict(value = "user:session-detail",    allEntries = true)
+    })
     public void swapOwnership(String currentAdminEmail, String targetEmail) {
 
         User currentAdmin = userRepository.findByEmail(currentAdminEmail)
@@ -145,6 +178,16 @@ public class AdminService {
     // Add this inside com.yaqazah.user.service.UserService
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "dashboard",              allEntries = true),
+            @CacheEvict(value = "admin:sessions",         allEntries = true),
+            @CacheEvict(value = "admin:session-detail",   allEntries = true),
+            @CacheEvict(value = "admin:drivers",          allEntries = true),
+            @CacheEvict(value = "admin:driver-detail",    allEntries = true),
+            @CacheEvict(value = "user:analytics",         allEntries = true),
+            @CacheEvict(value = "user:sessions",          allEntries = true),
+            @CacheEvict(value = "user:session-detail",    allEntries = true)
+    })
     public void deleteCompanyAdminByEmail(String requesterEmail, String targetAdminEmail) {
         // 1. Fetch the requester's company ID (Fixed: Changed Long to UUID)
         UUID requesterCompanyId = userRepository.findCompanyIdByEmail(requesterEmail)

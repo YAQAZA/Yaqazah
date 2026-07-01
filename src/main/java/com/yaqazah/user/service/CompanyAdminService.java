@@ -13,6 +13,9 @@ import org.jspecify.annotations.NullMarked;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
+
 
 import java.util.UUID;
 
@@ -53,6 +56,16 @@ public class CompanyAdminService {
 //    }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "dashboard",              allEntries = true),
+            @CacheEvict(value = "admin:sessions",         allEntries = true),
+            @CacheEvict(value = "admin:session-detail",   allEntries = true),
+            @CacheEvict(value = "admin:drivers",          allEntries = true),
+            @CacheEvict(value = "admin:driver-detail",    allEntries = true),
+            @CacheEvict(value = "user:analytics",         allEntries = true),
+            @CacheEvict(value = "user:sessions",          allEntries = true),
+            @CacheEvict(value = "user:session-detail",    allEntries = true)
+    })
     public void updateFleetDriver(UUID driverId, UpdateFleetDriverDto updatedData, String adminEmail) {
         User loggedInAdmin = userRepository.findByEmail(adminEmail)
                 .orElseThrow(() -> new IllegalStateException("Admin user not found."));

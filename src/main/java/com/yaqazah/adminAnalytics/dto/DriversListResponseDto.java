@@ -19,11 +19,21 @@ import java.util.List;
         "performanceTrend",
         "alertTrendValues",
         "overviewStats",
-        "drivers"
+        "drivers",
+        "page",
+        "size",
+        "totalElements",
+        "totalPages",
+        "hasNext"
 })
 public class DriversListResponseDto {
     private String filterId;
     private String timeInterval;
     private List<OverviewStatDto> overviewStats;
     private List<DriverSummaryDto> drivers;
+    private int page;
+    private int size;
+    private long totalElements;
+    private int totalPages;
+    private boolean hasNext;
 }

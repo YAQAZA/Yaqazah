@@ -6,6 +6,7 @@ import com.yaqazah.dashboard.dto.OverviewStatDto;
 import com.yaqazah.dashboard.util.DashboardFilterResolver;
 import com.yaqazah.user.model.Role;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +44,7 @@ public class NewAdminSessionAnalyticsService {
 
     @Cacheable(value = "admin:sessions", key = "#companyId + ':' + #filter + ':' + #fromIso + ':' + #toIso + ':' + (#search != null ? #search : '') + ':' + (#risk != null ? #risk : '') + ':' + (#sort != null ? #sort : '') + ':' + #page + ':' + #size")
     @Transactional(readOnly = true)
+//    @Async
     public SessionsListResponseDto buildSessionsList(UUID companyId, String filter, String fromIso, String toIso, String search, String risk, String sort, int page, int size) {
         DashboardFilterResolver.DateRange range = DashboardFilterResolver.resolve(filter, fromIso, toIso);
         String curStartIso = startOfDayUtcIso(range.from());

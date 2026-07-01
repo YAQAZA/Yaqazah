@@ -6,6 +6,9 @@ import com.yaqazah.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
+
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -20,6 +23,16 @@ public class DatabaseCleanupService {
 
     // Runs every day at 3:00 AM
     @Scheduled(cron = "0 0 3 * * ?")
+    @Caching(evict = {
+            @CacheEvict(value = "dashboard",              allEntries = true),
+            @CacheEvict(value = "admin:sessions",         allEntries = true),
+            @CacheEvict(value = "admin:session-detail",   allEntries = true),
+            @CacheEvict(value = "admin:drivers",          allEntries = true),
+            @CacheEvict(value = "admin:driver-detail",    allEntries = true),
+            @CacheEvict(value = "user:analytics",         allEntries = true),
+            @CacheEvict(value = "user:sessions",          allEntries = true),
+            @CacheEvict(value = "user:session-detail",    allEntries = true)
+    })
     public void hardDeleteOldGarbage() {
         // Calculate the date 30 days ago from exactly right now
         Instant thirtyDaysAgo = Instant.now().minus(30, ChronoUnit.DAYS);

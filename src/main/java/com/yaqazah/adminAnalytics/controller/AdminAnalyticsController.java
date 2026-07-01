@@ -86,9 +86,11 @@ public class AdminAnalyticsController {
             @RequestParam(value = "to", required = false) String to,
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "sort", required = false) String sort,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
             @Parameter(hidden = true) Authentication authentication) {
         return executeForCompany(authentication, companyId ->
-                newAdminDriversAnalyticsService.buildDriversList(companyId, filter, from, to, search, sort));
+                newAdminDriversAnalyticsService.buildDriversList(companyId, filter, from, to, search, sort, page, size));
     }
 
     @Operation(summary = "Driver analytics", description = "Detailed analytics for a single driver within a date range.")

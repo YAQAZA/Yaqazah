@@ -59,6 +59,12 @@ public class NewAdminDriversAnalyticsService {
     @Cacheable(value = "admin:drivers", key = "#companyId + ':' + #filter + ':' + #fromIso + ':' + #toIso + ':' + (#search != null ? #search : '') + ':' + (#sort != null ? #sort : '')")
     @Transactional(readOnly = true)
     public DriversListResponseDto buildDriversList(UUID companyId, String filter, String fromIso, String toIso, String search, String sort) {
+        return buildDriversList(companyId, filter, fromIso, toIso, search, sort, 0, Integer.MAX_VALUE);
+    }
+
+    @Cacheable(value = "admin:drivers", key = "#companyId + ':' + #filter + ':' + #fromIso + ':' + #toIso + ':' + (#search != null ? #search : '') + ':' + (#sort != null ? #sort : '') + ':' + #page + ':' + #size")
+    @Transactional(readOnly = true)
+    public DriversListResponseDto buildDriversList(UUID companyId, String filter, String fromIso, String toIso, String search, String sort, int page, int size) {
         DateRange range = DashboardFilterResolver.resolve(filter, fromIso, toIso);
         String curStartIso = startOfDayUtcIso(range.from());
         String curEndExcl = startOfDayUtcIso(range.to().plusDays(1));
@@ -117,6 +123,13 @@ public class NewAdminDriversAnalyticsService {
             return newestFirst ? -comp : comp;
         });
 
+        // Apply pagination slice
+        int totalElements = filteredDrivers.size();
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+        int start = Math.min(page * size, totalElements);
+        int end = Math.min(start + size, totalElements);
+        List<DriverSummaryDto> paginatedDrivers = new ArrayList<>(filteredDrivers.subList(start, end));
+
         return DriversListResponseDto.builder()
                 .filterId(DashboardFilterResolver.toFilterId(filter))
                 .timeInterval(DashboardFilterResolver.formatTimeInterval(range.from(), range.to()))
@@ -125,7 +138,12 @@ public class NewAdminDriversAnalyticsService {
                         overviewStat("Active Drivers", activeCur, activePrev, false),
                         overviewStat("Average Safety Score", avgScoreCur, avgScorePrev, true),
                         overviewStat("High Risk Drivers", highRiskCur, highRiskPrev, false)))
-                .drivers(filteredDrivers)
+                .drivers(paginatedDrivers)
+                .page(page)
+                .size(size)
+                .totalElements(totalElements)
+                .totalPages(totalPages)
+                .hasNext(page < totalPages - 1)
                 .build();
     }
 

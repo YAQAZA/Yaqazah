@@ -40,9 +40,11 @@ public class AnalyticsController {
             @RequestParam("filter") String filter,
             @RequestParam(value = "from", required = false) String from,
             @RequestParam(value = "to", required = false) String to,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
             @Parameter(hidden = true) Authentication authentication) {
         return executeForDriver(authentication, driverId ->
-                newUserAnalyticsService.buildSessionsList(driverId, filter, from, to));
+                newUserAnalyticsService.buildSessionsList(driverId, filter, from, to, page, size));
     }
 
     @Operation(summary = "Session details", description = "Detailed session data and detection logs for a single session.")

@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.UUID;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
+
 
 
 @NullMarked
@@ -88,6 +91,16 @@ public class AdminController {
 
     @DeleteMapping("/{userId}")
     @Operation(summary = "Delete user by id")
+    @Caching(evict = {
+            @CacheEvict(value = "dashboard",              allEntries = true),
+            @CacheEvict(value = "admin:sessions",         allEntries = true),
+            @CacheEvict(value = "admin:session-detail",   allEntries = true),
+            @CacheEvict(value = "admin:drivers",          allEntries = true),
+            @CacheEvict(value = "admin:driver-detail",    allEntries = true),
+            @CacheEvict(value = "user:analytics",         allEntries = true),
+            @CacheEvict(value = "user:sessions",          allEntries = true),
+            @CacheEvict(value = "user:session-detail",    allEntries = true)
+    })
     public ResponseEntity<String> deleteUser(
             @PathVariable UUID userId
     ) {

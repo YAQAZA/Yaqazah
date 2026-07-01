@@ -34,11 +34,7 @@ public class AdminController {
 
     private String getCurrentAdminEmail() {
 
-        Authentication authentication =
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication();
-
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication.getName();
     }
 
@@ -95,13 +91,8 @@ public class AdminController {
     public ResponseEntity<String> deleteUser(
             @PathVariable UUID userId
     ) {
-
         userService.deleteAccount(userId);
-
-
-        return ResponseEntity.ok(
-                "User deleted successfully"
-        );
+        return ResponseEntity.ok("User deleted successfully");
     }
 
     @DeleteMapping
@@ -109,15 +100,8 @@ public class AdminController {
     public ResponseEntity<String> deleteUser(
             @Valid @RequestBody DeleteUserRequestDto request
     ) {
-
-        adminService.deleteUserByEmail(
-                request.getEmail()
-        );
-
-
-        return ResponseEntity.ok(
-                "User deleted successfully"
-        );
+        adminService.deleteUserByEmail(request.getEmail());
+        return ResponseEntity.ok("User deleted successfully");
     }
 
     @PutMapping("/swap-ownership")
@@ -127,10 +111,7 @@ public class AdminController {
             Principal principal
     ) {
 
-        adminService.swapOwnership(
-                principal.getName(),
-                request.getTargetEmail()
-        );
+        adminService.swapOwnership(principal.getName(), request.getTargetEmail());
 
 
         return ResponseEntity.ok(

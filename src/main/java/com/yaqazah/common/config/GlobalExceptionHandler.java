@@ -112,4 +112,10 @@ public class GlobalExceptionHandler {
                         )
                 );
     }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<?> handleAccessDenied(org.springframework.security.access.AccessDeniedException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", e.getMessage()));
+    }
 }

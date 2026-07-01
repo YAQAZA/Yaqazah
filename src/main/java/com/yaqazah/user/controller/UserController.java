@@ -1,5 +1,6 @@
 package com.yaqazah.user.controller;
 
+import com.yaqazah.user.dto.request.DeleteUserRequestDto;
 import com.yaqazah.user.dto.request.FleetDriverDto;
 import com.yaqazah.user.dto.request.LoginRequestDto;
 import com.yaqazah.user.dto.response.AdminCompanyDashboardDto;
@@ -160,6 +161,14 @@ public class UserController {
         userService.addFleetDriver(request, getCurrentUserEmail());
 
         return ResponseEntity.ok("Fleet driver added successfully");
+    }
+
+    @DeleteMapping("/admin-delete-driver")
+    @PreAuthorize("hasAnyRole('ADMIN','COMPANY_ADMIN')")
+    @Operation(summary = "Delete driver by email")
+    public ResponseEntity<String> deleteUser(@Valid @RequestBody DeleteUserRequestDto request) {
+        userService.deleteDriverByEmail(getCurrentUserEmail(), request.getEmail());
+        return ResponseEntity.ok("User deleted successfully");
     }
 
     //    @GetMapping("/company-admins")

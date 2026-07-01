@@ -39,6 +39,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByCompany_CompanyIdAndRoleAndIsDeletedFalse(UUID companyId, Role role);
     boolean existsByEmail(String email);
 
+    @Query("SELECT u.company.companyId FROM User u WHERE u.email = :email")
+    Optional<Long> findCompanyIdByEmail(@Param("email") String email);
+
     // Add this inside UserRepository
     List<User> findByIsDeletedTrueAndDeletedAtBefore(Instant cutoffDate);
 

@@ -21,6 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.AccessDeniedException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -287,6 +288,25 @@ public class UserService {
 
         userRepository.save(newDriver);
         notificationService.sendWelcomePasswordSetEmail(newDriver.getEmail());
+    }
+
+    @Transactional
+    public void deleteDriverByEmail(String adminEmail, String driverEmail) {
+        // Fetch only the IDs needed for the check
+        Long adminCompanyId = userRepository.findCompanyIdByEmail(adminEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Admin not found"));
+
+        Long driverCompanyId = userRepository.findCompanyIdByEmail(driverEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Driver not found"));
+
+        // Compare
+        if (!adminCompanyId.equals(driverCompanyId)) {
+            throw new SecurityException("You are not authorized to delete a user from another company.");
+        }
+
+        // Now delete by finding the actual object needed for deletion
+        User driver = userRepository.findByEmail(driverEmail).orElseThrow();
+        deleteAccount(driver.getUserId());
     }
 
     public List<AdminListDto> getCompanyAdmins(String requesterEmail) {

@@ -111,13 +111,11 @@ public class AdminController {
     @DeleteMapping
     @Operation(summary = "Delete company admin by email")
     public ResponseEntity<String> deleteUser(
-            @Valid @RequestBody DeleteUserRequestDto request,
-            Principal principal // <-- Injects the currently authenticated user
+            @Valid @RequestBody DeleteUserRequestDto request
     ) {
-        // principal.getName() usually returns the username/email of the logged-in user
-        String requesterEmail = principal.getName();
+        String adminEmail = getCurrentAdminEmail();
 
-        adminService.deleteCompanyAdminByEmail(requesterEmail, request.getEmail());
+        adminService.deleteCompanyAdminByEmail(adminEmail, request.getEmail());
 
         return ResponseEntity.ok("Company admin deleted successfully");
     }

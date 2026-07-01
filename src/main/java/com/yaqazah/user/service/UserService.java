@@ -226,49 +226,162 @@ public class UserService {
     // ========================================================================
     @Transactional
     public void hardDeleteAccount(UUID userId) {
+
         User user = userRepository.findById(userId).orElse(null);
-        if (user == null) return; // User is already permanently gone
+
+        if (user == null) return;
+
 
         switch (user.getRole()) {
+
+
             case INDEPENDENT_DRIVER:
             case FLEET_DRIVER:
+
                 deleteUserAssociatedData(user);
                 userRepository.delete(user);
                 break;
 
-            case ADMIN:
+
+
             case COMPANY_ADMIN:
+
                 Company company = user.getCompany();
+
                 if (company != null) {
+
                     UUID cid = company.getCompanyId();
 
-                    // Count how many leaders are left
-                    int companyLeaderCount = userRepository.countByCompany_CompanyIdAndRoleIn(
-                            cid, List.of(Role.ADMIN, Role.COMPANY_ADMIN)
-                    );
 
-                    if (companyLeaderCount <= 1) {
-                        // 1. Permanently delete all drivers
-                        List<User> fleetDrivers = userRepository.findByCompany_CompanyIdAndRole(cid, Role.FLEET_DRIVER);
-                        for (User driver : fleetDrivers) {
-                            deleteUserAssociatedData(driver);
-                            userRepository.delete(driver);
-                        }
-                        // 2. Permanently delete this admin
-                        deleteUserAssociatedData(user);
-                        userRepository.delete(user);
-                        // 3. Permanently delete the company
-                        companyRepository.delete(company);
+                    int leaders =
+                            userRepository.countByCompany_CompanyIdAndRoleInAndIsDeletedFalse(
+                                    cid,
+                                    List.of(Role.ADMIN, Role.COMPANY_ADMIN)
+                            );
+
+
+                    if (leaders <= 1) {
+
+                        deleteCompanyData(company);
+
                     } else {
+
                         deleteUserAssociatedData(user);
                         userRepository.delete(user);
                     }
+
                 } else {
+
                     deleteUserAssociatedData(user);
                     userRepository.delete(user);
                 }
+
+                break;
+
+
+
+            case ADMIN:
+
+                Company adminCompany = user.getCompany();
+
+
+                if (adminCompany != null) {
+
+                    UUID cid = adminCompany.getCompanyId();
+
+
+                    long admins =
+                            userRepository.countByCompany_CompanyIdAndRoleAndIsDeletedFalse(
+                                    cid,
+                                    Role.ADMIN
+                            );
+
+
+                    // Last owner permanently gone
+                    if (admins <= 1) {
+
+
+                        Optional<User> replacement =
+                                userRepository
+                                        .findFirstByCompany_CompanyIdAndRoleAndIsDeletedFalseOrderByInsertedAtAsc(
+                                                cid,
+                                                Role.COMPANY_ADMIN
+                                        );
+
+
+                        if (replacement.isPresent()) {
+
+                            // Promote company admin instead
+                            User newOwner = replacement.get();
+
+                            newOwner.setRole(Role.ADMIN);
+
+                            userRepository.save(newOwner);
+
+
+                            deleteUserAssociatedData(user);
+                            userRepository.delete(user);
+
+
+                        } else {
+
+                            deleteCompanyData(adminCompany);
+                        }
+
+                    } else {
+
+                        deleteUserAssociatedData(user);
+                        userRepository.delete(user);
+                    }
+
+
+                } else {
+
+                    deleteUserAssociatedData(user);
+                    userRepository.delete(user);
+                }
+
+
                 break;
         }
+    }
+
+
+
+    private void deleteCompanyData(Company company) {
+
+        UUID cid = company.getCompanyId();
+
+
+        List<User> drivers =
+                userRepository.findByCompany_CompanyIdAndRole(
+                        cid,
+                        Role.FLEET_DRIVER
+                );
+
+
+        for (User driver : drivers) {
+
+            deleteUserAssociatedData(driver);
+            userRepository.delete(driver);
+        }
+
+
+        List<User> admins =
+                userRepository.findByCompany_CompanyIdAndRoleIn(
+                        cid,
+                        List.of(Role.ADMIN, Role.COMPANY_ADMIN)
+                );
+
+
+        for (User admin : admins) {
+
+            deleteUserAssociatedData(admin);
+            userRepository.delete(admin);
+        }
+
+
+        companyRepository.delete(company);
     }
 
     /**
@@ -286,57 +399,84 @@ public class UserService {
     // ========================================================================
     @Transactional
     public void restoreAccount(String email, String password) {
-        // 1. Find the user by email including deleted ones
+
         User user = userRepository.findByEmailIncludingDeleted(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
 
-        // 2. Make sure they are actually deleted
+        // Must actually be deleted
         if (!user.isDeleted()) {
             throw new IllegalStateException("Account is already active.");
         }
 
-        // 3. Check the password
+        // Verify credentials
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
             throw new SecurityException("Invalid credentials.");
         }
 
-        // 4. Restore the user's base properties
+        // Restore user
         user.setDeleted(false);
         user.setDeletedAt(null);
 
-        // 5. Handle Company Leaders (Admin & Company Admin)
-        if (user.getRole() == Role.COMPANY_ADMIN || user.getRole() == Role.ADMIN) {
+        // Company leader restoration
+        if (user.getRole() == Role.ADMIN ||
+                user.getRole() == Role.COMPANY_ADMIN) {
+
             Company company = user.getCompany();
 
             if (company != null) {
-                // Restore the company and drivers if the company was deleted
+
+                // Restore company if it was soft deleted
                 if (company.isDeleted()) {
+
                     company.setDeleted(false);
                     company.setDeletedAt(null);
+
                     companyRepository.save(company);
 
-                    List<User> fleetDrivers = userRepository.findByCompany_CompanyIdAndRole(
-                            company.getCompanyId(), Role.FLEET_DRIVER);
+                    // Restore all soft-deleted fleet drivers
+                    List<User> fleetDrivers =
+                            userRepository.findByCompany_CompanyIdAndRoleIncludingDeleted(
+                                    company.getCompanyId(),
+                                    Role.FLEET_DRIVER
+                            );
 
                     for (User driver : fleetDrivers) {
-                        driver.setDeleted(false);
-                        driver.setDeletedAt(null);
-                        userRepository.save(driver);
+
+                        if (driver.isDeleted()) {
+                            driver.setDeleted(false);
+                            driver.setDeletedAt(null);
+
+                            userRepository.save(driver);
+                        }
                     }
                 }
 
-                // --- DYNAMIC ROLE ASSIGNMENT ---
-                // Check if the company currently has an active ADMIN
-                boolean activeAdminExists = userRepository.existsByCompany_CompanyIdAndRoleAndIsDeletedFalse(
-                        company.getCompanyId(), Role.ADMIN
-                );
+                // Role assignment logic
 
-                if (!activeAdminExists) {
-                    // No active ADMIN exists -> The first leader back gets the crown
+                if (user.getRole() == Role.ADMIN) {
+
+                    // Original owner keeps ownership
                     user.setRole(Role.ADMIN);
+
                 } else {
-                    // An active ADMIN already exists -> Anyone else comes back as a COMPANY_ADMIN
-                    user.setRole(Role.COMPANY_ADMIN);
+
+                    boolean activeAdminExists =
+                            userRepository.existsByCompany_CompanyIdAndRoleAndIsDeletedFalse(
+                                    company.getCompanyId(),
+                                    Role.ADMIN
+                            );
+
+                    if (!activeAdminExists) {
+
+                        // No active owner exists
+                        // First company admin back becomes owner
+                        user.setRole(Role.ADMIN);
+
+                    } else {
+
+                        // Owner already exists
+                        user.setRole(Role.COMPANY_ADMIN);
+                    }
                 }
             }
         }

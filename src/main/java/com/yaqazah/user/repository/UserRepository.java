@@ -57,6 +57,17 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             Role role
     );
 
+    @Query("""
+       SELECT u
+       FROM User u
+       WHERE u.company.companyId = :companyId
+       AND u.role = :role
+       """)
+    List<User> findByCompany_CompanyIdAndRoleIncludingDeleted(
+            @Param("companyId") UUID companyId,
+            @Param("role") Role role
+    );
+
     boolean existsByEmail(String email);
 
     // --- FIX 1: Changed Optional<Long> to Optional<UUID> ---

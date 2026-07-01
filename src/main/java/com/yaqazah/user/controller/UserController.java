@@ -220,7 +220,7 @@ public class UserController {
             @CacheEvict(value = "user:session-detail",    allEntries = true)
     })
     public ResponseEntity<String> deleteDriver(
-            @Valid DeleteUserRequestDto request
+            @Valid @RequestBody DeleteUserRequestDto request
     ) {
         String adminEmail = getCurrentUserEmail();
 

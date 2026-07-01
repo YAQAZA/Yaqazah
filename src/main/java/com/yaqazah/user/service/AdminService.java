@@ -31,44 +31,44 @@ public class AdminService {
     private final CompanyService companyService;
     private final UserService userService;
 
-    @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "dashboard",              allEntries = true),
-            @CacheEvict(value = "admin:sessions",         allEntries = true),
-            @CacheEvict(value = "admin:session-detail",   allEntries = true),
-            @CacheEvict(value = "admin:drivers",          allEntries = true),
-            @CacheEvict(value = "admin:driver-detail",    allEntries = true),
-            @CacheEvict(value = "user:analytics",         allEntries = true),
-            @CacheEvict(value = "user:sessions",          allEntries = true),
-            @CacheEvict(value = "user:session-detail",    allEntries = true)
-    })
-    public void registerCompanyOwner(CompanyOwnerRegistrationDto req) {
-        // 1. Validate email first
-        if (userRepository.findByEmail(req.getAdminEmail()).isPresent()) {
-            throw new IllegalArgumentException("Email is already taken!");
-        }
-
-        // 2. Create the Company
-        Company newCompany = new Company();
-        newCompany.setName(req.getCompanyName());
-//        newCompany.setAddress(req.getCompanyAddress());
-
-        Company savedCompany = companyService.createCompany(newCompany);
-
-        // 3. Map DTO to User
-        User newAdmin = new User();
-        newAdmin.setEmail(req.getAdminEmail());
-        newAdmin.setFullName(req.getAdminFullName());
-        newAdmin.setGender(req.getAdminGender());
-        newAdmin.setRole(Role.COMPANY_ADMIN);
-        newAdmin.setCompany(savedCompany);
-        newAdmin.setPasswordHash(passwordEncoder.encode(req.getAdminPassword()));
-        newAdmin.setStatus(UserStatus.ACTIVE);
-        newAdmin.setBirthDate(req.getBirthDate());
-
-        // 4. Save to DB
-        userRepository.save(newAdmin);
-    }
+//    @Transactional
+//    @Caching(evict = {
+//            @CacheEvict(value = "dashboard",              allEntries = true),
+//            @CacheEvict(value = "admin:sessions",         allEntries = true),
+//            @CacheEvict(value = "admin:session-detail",   allEntries = true),
+//            @CacheEvict(value = "admin:drivers",          allEntries = true),
+//            @CacheEvict(value = "admin:driver-detail",    allEntries = true),
+//            @CacheEvict(value = "user:analytics",         allEntries = true),
+//            @CacheEvict(value = "user:sessions",          allEntries = true),
+//            @CacheEvict(value = "user:session-detail",    allEntries = true)
+//    })
+//    public void registerCompanyOwner(CompanyOwnerRegistrationDto req) {
+//        // 1. Validate email first
+//        if (userRepository.findByEmail(req.getAdminEmail()).isPresent()) {
+//            throw new IllegalArgumentException("Email is already taken!");
+//        }
+//
+//        // 2. Create the Company
+//        Company newCompany = new Company();
+//        newCompany.setName(req.getCompanyName());
+////        newCompany.setAddress(req.getCompanyAddress());
+//
+//        Company savedCompany = companyService.createCompany(newCompany);
+//
+//        // 3. Map DTO to User
+//        User newAdmin = new User();
+//        newAdmin.setEmail(req.getAdminEmail());
+//        newAdmin.setFullName(req.getAdminFullName());
+//        newAdmin.setGender(req.getAdminGender());
+//        newAdmin.setRole(Role.COMPANY_ADMIN);
+//        newAdmin.setCompany(savedCompany);
+//        newAdmin.setPasswordHash(passwordEncoder.encode(req.getAdminPassword()));
+//        newAdmin.setStatus(UserStatus.ACTIVE);
+//        newAdmin.setBirthDate(req.getBirthDate());
+//
+//        // 4. Save to DB
+//        userRepository.save(newAdmin);
+//    }
 
     @Transactional
     @Caching(evict = {

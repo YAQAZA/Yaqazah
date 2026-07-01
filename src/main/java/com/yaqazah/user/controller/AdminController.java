@@ -41,18 +41,18 @@ public class AdminController {
         return authentication.getName();
     }
 
-    @PostMapping("/register-owner")
-    @Operation(summary = "Register company owner")
-    public ResponseEntity<String> registerCompanyOwner(
-            @Valid @RequestBody CompanyOwnerRegistrationDto request
-    ) {
-
-        adminService.registerCompanyOwner(request);
-
-        return ResponseEntity.ok(
-                "Company owner registered successfully"
-        );
-    }
+//    @PostMapping("/register-owner")
+//    @Operation(summary = "Register company owner")
+//    public ResponseEntity<String> registerCompanyOwner(
+//            @Valid @RequestBody CompanyOwnerRegistrationDto request
+//    ) {
+//
+//        adminService.registerCompanyOwner(request);
+//
+//        return ResponseEntity.ok(
+//                "Company owner registered successfully"
+//        );
+//    }
 
     @PostMapping("/add-company-admin")
     @Operation(summary = "Add company admin")

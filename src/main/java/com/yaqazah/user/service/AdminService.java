@@ -59,7 +59,7 @@ public class AdminService {
         User newAdmin = new User();
         newAdmin.setEmail(req.getAdminEmail());
         newAdmin.setFullName(req.getAdminFullName());
-        newAdmin.setGender(req.getAdminGender()); // Already validated as non-null by DTO
+        newAdmin.setGender(req.getAdminGender());
         newAdmin.setRole(Role.COMPANY_ADMIN);
         newAdmin.setCompany(savedCompany);
         newAdmin.setPasswordHash(passwordEncoder.encode(req.getAdminPassword()));

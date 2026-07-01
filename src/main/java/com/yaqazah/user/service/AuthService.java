@@ -67,6 +67,7 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.INDEPENDENT_DRIVER);
         user.setStatus(UserStatus.PENDING_VERIFICATION);
+        user.setBirthDate(request.getBirthDate());
 
         userRepository.save(user);
 
@@ -103,10 +104,12 @@ public class AuthService {
         User newAdmin = new User();
         newAdmin.setEmail(req.getAdminEmail());
         newAdmin.setFullName(req.getAdminFullName());
+        newAdmin.setGender(req.getAdminGender());
         newAdmin.setRole(Role.ADMIN);
         newAdmin.setCompany(savedCompany);
         newAdmin.setPasswordHash(passwordEncoder.encode(req.getAdminPassword()));
         newAdmin.setStatus(UserStatus.PENDING_VERIFICATION);
+        newAdmin.setBirthDate(req.getBirthDate());
 
         userRepository.save(newAdmin);
 

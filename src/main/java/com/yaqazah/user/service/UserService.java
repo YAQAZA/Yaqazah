@@ -292,21 +292,26 @@ public class UserService {
 
     @Transactional
     public void deleteDriverByEmail(String adminEmail, String driverEmail) {
-        // Fetch only the IDs needed for the check
-        Long adminCompanyId = userRepository.findCompanyIdByEmail(adminEmail)
+        // 1. Fetch the admin's company ID (Fixed: Changed Long to UUID)
+        UUID adminCompanyId = userRepository.findCompanyIdByEmail(adminEmail)
                 .orElseThrow(() -> new IllegalArgumentException("Admin not found"));
 
-        Long driverCompanyId = userRepository.findCompanyIdByEmail(driverEmail)
+        // 2. Fetch the full driver object
+        User driver = userRepository.findByEmail(driverEmail)
                 .orElseThrow(() -> new IllegalArgumentException("Driver not found"));
 
-        // Compare
-        if (!adminCompanyId.equals(driverCompanyId)) {
+        // 3. Verify the user is actually a driver
+        if (driver.getRole() != Role.FLEET_DRIVER) {
+            throw new IllegalArgumentException("The specified user is not a driver.");
+        }
+
+        // 4. Compare company IDs (Fixed: Navigating through the Company object)
+        if (driver.getCompany() == null || !adminCompanyId.equals(driver.getCompany().getCompanyId())) {
             throw new SecurityException("You are not authorized to delete a user from another company.");
         }
 
-        // Now delete by finding the actual object needed for deletion
-        User driver = userRepository.findByEmail(driverEmail).orElseThrow();
-        deleteAccount(driver.getUserId());
+        // 5. Delete the account
+        deleteAccount(driver.getUserId()); // Ensure your deleteAccount method accepts a UUID
     }
 
     public List<AdminListDto> getCompanyAdmins(String requesterEmail) {

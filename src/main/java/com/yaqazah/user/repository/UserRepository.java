@@ -3,7 +3,7 @@ package com.yaqazah.user.repository;
 import com.yaqazah.report.dto.DriverSessionReportDto;
 import com.yaqazah.user.model.Role;
 import com.yaqazah.user.model.User;
-import org.jspecify.annotations.NullMarked; // Ensure this is imported
+import org.jspecify.annotations.NullMarked;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,37 +15,38 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-@NullMarked // Tells the compiler: "Everything in here is non-null by default"
+@NullMarked
 public interface UserRepository extends JpaRepository<User, UUID> {
 
-    // The <User> here is now considered non-null
     Optional<User> findByEmail(String email);
 
     @Query(value = "SELECT * FROM users WHERE email = :email", nativeQuery = true)
     Optional<User> findByEmailIncludingDeleted(@Param("email") String email);
 
-    // Checks if they are the last Admin in the whole system
     long countByRole(Role role);
 
-    // Finds the oldest Company Admin for promotion (assumes a 'createdAt' field exists)
     Optional<User> findFirstByRoleOrderByInsertedAtAsc(Role role);
 
-    // Checks how many admins are left in a specific company
     int countByCompany_CompanyIdAndRole(UUID companyId, Role role);
 
     List<User> findByCompany_CompanyIdAndRole(UUID companyId, Role role);
 
     void deleteByCompany_CompanyIdAndRole(UUID companyId, Role role);
+
     boolean existsByCompany_CompanyIdAndRoleAndIsDeletedFalse(UUID companyId, Role role);
+
     boolean existsByEmail(String email);
 
+    // --- FIX 1: Changed Optional<Long> to Optional<UUID> ---
     @Query("SELECT u.company.companyId FROM User u WHERE u.email = :email")
-    Optional<Long> findCompanyIdByEmail(@Param("email") String email);
+    Optional<UUID> findCompanyIdByEmail(@Param("email") String email);
 
-    // Add this inside UserRepository
-    List<User> findByIsDeletedTrueAndDeletedAtBefore(Instant cutoffDate);
+    // --- FIX 2: Added nativeQuery to bypass the @SQLRestriction("is_deleted = false") ---
+    @Query(value = "SELECT * FROM users WHERE is_deleted = true AND deleted_at < :cutoffDate", nativeQuery = true)
+    List<User> findByIsDeletedTrueAndDeletedAtBefore(@Param("cutoffDate") Instant cutoffDate);
 
     int countByCompany_CompanyIdAndRoleIn(UUID companyId, List<Role> roles);
+
     List<User> findByCompany_CompanyIdAndRoleIn(UUID companyId, List<Role> roles);
 
     @Query("SELECT new com.yaqazah.report.dto.DriverSessionReportDto(" +

@@ -16,6 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class AdminService {
@@ -143,10 +145,26 @@ public class AdminService {
     // Add this inside com.yaqazah.user.service.UserService
 
     @Transactional
-    public void deleteUserByEmail(String email) {
-        User targetUser = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
+    public void deleteCompanyAdminByEmail(String requesterEmail, String targetAdminEmail) {
+        // 1. Fetch the requester's company ID (Fixed: Changed Long to UUID)
+        UUID requesterCompanyId = userRepository.findCompanyIdByEmail(requesterEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Requester not found"));
 
-        userService.deleteAccount(targetUser.getUserId());
+        // 2. Fetch the full target admin object
+        User targetAdmin = userRepository.findByEmail(targetAdminEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Target admin not found"));
+
+        // 3. Verify the target user is actually a company admin
+        if (targetAdmin.getRole() != Role.COMPANY_ADMIN) {
+            throw new IllegalArgumentException("The specified user is not a company admin.");
+        }
+
+        // 4. Compare company IDs (Fixed: Navigating through the Company object)
+        if (targetAdmin.getCompany() == null || !requesterCompanyId.equals(targetAdmin.getCompany().getCompanyId())) {
+            throw new SecurityException("You are not authorized to delete an admin from another company.");
+        }
+
+        // 5. Delete the account
+        userService.deleteAccount(targetAdmin.getUserId()); // Ensure your deleteAccount method accepts a UUID
     }
 }

@@ -163,12 +163,17 @@ public class UserController {
         return ResponseEntity.ok("Fleet driver added successfully");
     }
 
-    @DeleteMapping("/admin-delete-driver")
+    @DeleteMapping("/drivers")
     @PreAuthorize("hasAnyRole('ADMIN','COMPANY_ADMIN')")
     @Operation(summary = "Delete driver by email")
-    public ResponseEntity<String> deleteUser(@Valid @RequestBody DeleteUserRequestDto request) {
-        userService.deleteDriverByEmail(getCurrentUserEmail(), request.getEmail());
-        return ResponseEntity.ok("User deleted successfully");
+    public ResponseEntity<String> deleteDriver(
+            @Valid DeleteUserRequestDto request
+    ) {
+        String adminEmail = getCurrentUserEmail();
+
+        userService.deleteDriverByEmail(adminEmail, request.getEmail());
+
+        return ResponseEntity.ok("Driver deleted successfully");
     }
 
     //    @GetMapping("/company-admins")

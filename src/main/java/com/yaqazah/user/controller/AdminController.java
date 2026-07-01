@@ -96,12 +96,17 @@ public class AdminController {
     }
 
     @DeleteMapping
-    @Operation(summary = "Delete user by email")
+    @Operation(summary = "Delete company admin by email")
     public ResponseEntity<String> deleteUser(
-            @Valid @RequestBody DeleteUserRequestDto request
+            @Valid @RequestBody DeleteUserRequestDto request,
+            Principal principal // <-- Injects the currently authenticated user
     ) {
-        adminService.deleteUserByEmail(request.getEmail());
-        return ResponseEntity.ok("User deleted successfully");
+        // principal.getName() usually returns the username/email of the logged-in user
+        String requesterEmail = principal.getName();
+
+        adminService.deleteCompanyAdminByEmail(requesterEmail, request.getEmail());
+
+        return ResponseEntity.ok("Company admin deleted successfully");
     }
 
     @PutMapping("/swap-ownership")

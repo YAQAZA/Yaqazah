@@ -21,7 +21,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.file.AccessDeniedException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -75,64 +74,150 @@ public class UserService {
     // ========================================================================
     @Transactional
     public void deleteAccount(UUID userId) {
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
 
+        // Soft delete the user first so counts exclude this user
         user.setDeleted(true);
         user.setDeletedAt(Instant.now());
+        userRepository.save(user);
+
 
         switch (user.getRole()) {
+
             case INDEPENDENT_DRIVER:
             case FLEET_DRIVER:
-                userRepository.save(user);
+                // Only delete this driver
                 break;
+
 
             case ADMIN:
-                long totalAdmins = userRepository.countByRole(Role.ADMIN);
 
-                // Promote the oldest company admin if there is one
-                if (totalAdmins <= 1) {
-                    Optional<User> oldestCompanyAdminOpt = userRepository
-                            .findFirstByRoleOrderByInsertedAtAsc(Role.COMPANY_ADMIN);
+                Company adminCompany = user.getCompany();
 
-                    if (oldestCompanyAdminOpt.isPresent()) {
-                        User oldestCompanyAdmin = oldestCompanyAdminOpt.get();
-                        oldestCompanyAdmin.setRole(Role.ADMIN);
-                        userRepository.save(oldestCompanyAdmin);
-                    }
+                if (adminCompany == null) {
+                    break;
                 }
-                // INTENTIONAL FALL-THROUGH: Drop directly into COMPANY_ADMIN logic
-                // to soft-delete their company and drivers!
 
-            case COMPANY_ADMIN:
-                Company company = user.getCompany();
-                if (company != null) {
-                    UUID cid = company.getCompanyId();
+                UUID adminCompanyId = adminCompany.getCompanyId();
 
-                    // Count how many leaders (Admins or Company Admins) this company has left
-                    int companyLeaderCount = userRepository.countByCompany_CompanyIdAndRoleIn(
-                            cid, List.of(Role.ADMIN, Role.COMPANY_ADMIN)
-                    );
 
-                    if (companyLeaderCount <= 1) {
-                        // Soft delete all fleet drivers for this company
-                        List<User> fleetDrivers = userRepository.findByCompany_CompanyIdAndRole(cid, Role.FLEET_DRIVER);
+                // Count remaining company owners (excluding deleted)
+                long remainingAdmins =
+                        userRepository.countByCompany_CompanyIdAndRoleAndIsDeletedFalse(
+                                adminCompanyId,
+                                Role.ADMIN
+                        );
+
+
+                // If this was the last owner, promote oldest company admin
+                if (remainingAdmins == 0) {
+
+                    Optional<User> oldestCompanyAdmin =
+                            userRepository
+                                    .findFirstByCompany_CompanyIdAndRoleAndIsDeletedFalseOrderByInsertedAtAsc(
+                                            adminCompanyId,
+                                            Role.COMPANY_ADMIN
+                                    );
+
+
+                    if (oldestCompanyAdmin.isPresent()) {
+
+                        User newOwner = oldestCompanyAdmin.get();
+
+                        newOwner.setRole(Role.ADMIN);
+
+                        userRepository.save(newOwner);
+
+                    } else {
+
+                        // No admins left -> delete company and drivers
+
+                        List<User> fleetDrivers =
+                                userRepository.findByCompany_CompanyIdAndRoleAndIsDeletedFalse(
+                                        adminCompanyId,
+                                        Role.FLEET_DRIVER
+                                );
+
+
                         for (User driver : fleetDrivers) {
+
                             driver.setDeleted(true);
                             driver.setDeletedAt(Instant.now());
+
                             userRepository.save(driver);
                         }
-                        // Soft delete the company itself
-                        company.setDeleted(true);
-                        company.setDeletedAt(Instant.now());
-                        companyRepository.save(company);
+
+
+                        adminCompany.setDeleted(true);
+                        adminCompany.setDeletedAt(Instant.now());
+
+                        companyRepository.save(adminCompany);
                     }
                 }
-                userRepository.save(user);
+
                 break;
 
+
+
+            case COMPANY_ADMIN:
+
+                Company company = user.getCompany();
+
+                if (company == null) {
+                    break;
+                }
+
+
+                UUID companyId = company.getCompanyId();
+
+
+                // Remaining leaders after deleting this admin
+                int remainingLeaders =
+                        userRepository.countByCompany_CompanyIdAndRoleInAndIsDeletedFalse(
+                                companyId,
+                                List.of(
+                                        Role.ADMIN,
+                                        Role.COMPANY_ADMIN
+                                )
+                        );
+
+
+                // No owner/admin left
+                if (remainingLeaders == 0) {
+
+
+                    List<User> fleetDrivers =
+                            userRepository.findByCompany_CompanyIdAndRoleAndIsDeletedFalse(
+                                    companyId,
+                                    Role.FLEET_DRIVER
+                            );
+
+
+                    for (User driver : fleetDrivers) {
+
+                        driver.setDeleted(true);
+                        driver.setDeletedAt(Instant.now());
+
+                        userRepository.save(driver);
+                    }
+
+
+                    company.setDeleted(true);
+                    company.setDeletedAt(Instant.now());
+
+                    companyRepository.save(company);
+                }
+
+
+                break;
+
+
             default:
-                throw new IllegalStateException("Deletion not permitted for role: " + user.getRole());
+                throw new IllegalStateException(
+                        "Deletion not permitted for role: " + user.getRole()
+                );
         }
     }
 

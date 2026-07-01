@@ -34,6 +34,28 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     void deleteByCompany_CompanyIdAndRole(UUID companyId, Role role);
 
     boolean existsByCompany_CompanyIdAndRoleAndIsDeletedFalse(UUID companyId, Role role);
+    long countByCompany_CompanyIdAndRoleAndIsDeletedFalse(
+            UUID companyId,
+            Role role
+    );
+
+
+    int countByCompany_CompanyIdAndRoleInAndIsDeletedFalse(
+            UUID companyId,
+            List<Role> roles
+    );
+
+
+    Optional<User> findFirstByCompany_CompanyIdAndRoleAndIsDeletedFalseOrderByInsertedAtAsc(
+            UUID companyId,
+            Role role
+    );
+
+
+    List<User> findByCompany_CompanyIdAndRoleAndIsDeletedFalse(
+            UUID companyId,
+            Role role
+    );
 
     boolean existsByEmail(String email);
 

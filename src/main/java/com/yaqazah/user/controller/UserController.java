@@ -206,7 +206,7 @@ public class UserController {
         return ResponseEntity.ok("Fleet driver added successfully");
     }
 
-    @DeleteMapping("/drivers")
+    @DeleteMapping("/driver")
     @PreAuthorize("hasAnyRole('ADMIN','COMPANY_ADMIN')")
     @Operation(summary = "Delete driver by email")
     @Caching(evict = {

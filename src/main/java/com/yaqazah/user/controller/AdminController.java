@@ -89,24 +89,24 @@ public class AdminController {
 //        );
 //    }
 
-    @DeleteMapping("/{userId}")
-    @Operation(summary = "Delete user by id")
-    @Caching(evict = {
-            @CacheEvict(value = "dashboard",              allEntries = true),
-            @CacheEvict(value = "admin:sessions",         allEntries = true),
-            @CacheEvict(value = "admin:session-detail",   allEntries = true),
-            @CacheEvict(value = "admin:drivers",          allEntries = true),
-            @CacheEvict(value = "admin:driver-detail",    allEntries = true),
-            @CacheEvict(value = "user:analytics",         allEntries = true),
-            @CacheEvict(value = "user:sessions",          allEntries = true),
-            @CacheEvict(value = "user:session-detail",    allEntries = true)
-    })
-    public ResponseEntity<String> deleteUser(
-            @PathVariable UUID userId
-    ) {
-        userService.deleteAccount(userId);
-        return ResponseEntity.ok("User deleted successfully");
-    }
+//    @DeleteMapping("/{userId}")
+//    @Operation(summary = "Delete user by id")
+//    @Caching(evict = {
+//            @CacheEvict(value = "dashboard",              allEntries = true),
+//            @CacheEvict(value = "admin:sessions",         allEntries = true),
+//            @CacheEvict(value = "admin:session-detail",   allEntries = true),
+//            @CacheEvict(value = "admin:drivers",          allEntries = true),
+//            @CacheEvict(value = "admin:driver-detail",    allEntries = true),
+//            @CacheEvict(value = "user:analytics",         allEntries = true),
+//            @CacheEvict(value = "user:sessions",          allEntries = true),
+//            @CacheEvict(value = "user:session-detail",    allEntries = true)
+//    })
+//    public ResponseEntity<String> deleteUser(
+//            @PathVariable UUID userId
+//    ) {
+//        userService.deleteAccount(userId);
+//        return ResponseEntity.ok("User deleted successfully");
+//    }
 
     @DeleteMapping
     @Operation(summary = "Delete company admin by email")
